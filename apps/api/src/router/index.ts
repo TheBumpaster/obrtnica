@@ -6,9 +6,14 @@ import { initTRPC, TRPCError } from '@trpc/server';
 
 import { enqueueAuditEvent } from '../audit/audit.service';
 import { db } from '../db';
+import { authRouter } from './auth';
+import { emergencyAccessRouter } from './emergency-access';
 import { gdprRouter } from './gdpr';
 import { healthRouter } from './health';
+import { rbacRouter } from './rbac';
 import { sampleRouter } from './sample';
+import { tokensRouter } from './tokens';
+import { workspacesRouter } from './workspaces';
 
 const t = initTRPC.context<Context>().create();
 
@@ -78,9 +83,14 @@ export const protectedProcedure = auditMiddleware.use(async (opts) => {
 });
 
 export const appRouter = router({
+  auth: authRouter,
+  emergencyAccess: emergencyAccessRouter,
   gdpr: gdprRouter,
   health: healthRouter,
+  rbac: rbacRouter,
   sample: sampleRouter,
+  tokens: tokensRouter,
+  workspaces: workspacesRouter,
 });
 
 export type AppRouter = typeof appRouter;

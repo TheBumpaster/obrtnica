@@ -1,4 +1,5 @@
 import { AuditEventTypes, buildAuditEvent, buildUserActor, createGdprEraseRequestedEvent, createGdprExportRequestedEvent, DataCategories, DataClassifications } from '@serp/core';
+import { requireUserAuth } from '@serp/trpc';
 import { gdprDownloadExportInputSchema, gdprGetRequestStatusInputSchema, gdprRequestErasureInputSchema, gdprRequestExportInputSchema } from '@serp/validations';
 import { TRPCError } from '@trpc/server';
 import { and, eq } from 'drizzle-orm';
@@ -13,11 +14,12 @@ export const gdprRouter = router({
   requestExport: protectedProcedure
     .input(gdprRequestExportInputSchema)
     .mutation(async ({ input, ctx }) => {
-      const targetUserId = input.targetUserId || ctx.auth.userId;
+      const auth = requireUserAuth(ctx);
+      const targetUserId = input.targetUserId || auth.userId;
       const scopeOrgId = input.scopeOrgId || null;
 
       // Authorization check
-      if (targetUserId !== ctx.auth.userId) {
+      if (targetUserId !== auth.userId) {
         // Admin-on-behalf case: require admin role in scopeOrgId
         if (!scopeOrgId) {
           throw new TRPCError({
@@ -31,7 +33,7 @@ export const gdprRouter = router({
           .select()
           .from(orgMemberships)
           .where(
-            and(eq(orgMemberships.userId, ctx.auth.userId), eq(orgMemberships.orgId, scopeOrgId))
+            and(eq(orgMemberships.userId, auth.userId), eq(orgMemberships.orgId, scopeOrgId))
           )
           .limit(1);
 
@@ -54,7 +56,7 @@ export const gdprRouter = router({
           type: 'EXPORT',
           status: 'PENDING',
           scopeOrgId,
-          requesterUserId: ctx.auth.userId,
+          requesterUserId: auth.userId,
           targetUserId,
           correlationId,
           requestId: ctx.requestId,
@@ -64,7 +66,7 @@ export const gdprRouter = router({
         const auditEvent = buildAuditEvent({
           eventType: AuditEventTypes.DATA_EXPORT_REQUESTED,
           tenantId: scopeOrgId || undefined,
-          actor: buildUserActor(ctx.auth.userId),
+          actor: buildUserActor(auth.userId),
           ip: ctx.ip,
           userAgent: ctx.userAgent,
           requestId: ctx.requestId,
@@ -87,11 +89,11 @@ export const gdprRouter = router({
 
         // Emit domain event to trigger worker
         const domainEvent = createGdprExportRequestedEvent(
-          scopeOrgId || 'system',
+          scopeOrgId || auth.orgId || 'system',
           {
             requestId,
             targetUserId,
-            requesterUserId: ctx.auth.userId,
+            requesterUserId: auth.userId,
             scopeOrgId,
           },
           correlationId
@@ -104,7 +106,7 @@ export const gdprRouter = router({
           eventVersion: domainEvent.eventVersion,
           tenantId: domainEvent.tenantId,
           correlationId: domainEvent.correlationId,
-          payload: domainEvent.payload,
+          payload: domainEvent.payload as Record<string, unknown>,
           occurredAt: domainEvent.occurredAt,
         });
       });
@@ -115,12 +117,13 @@ export const gdprRouter = router({
   requestErasure: protectedProcedure
     .input(gdprRequestErasureInputSchema)
     .mutation(async ({ input, ctx }) => {
-      const targetUserId = input.targetUserId || ctx.auth.userId;
+      const auth = requireUserAuth(ctx);
+      const targetUserId = input.targetUserId || auth.userId;
       const scopeOrgId = input.scopeOrgId || null;
       const mode = input.mode;
 
       // Authorization check (same as export)
-      if (targetUserId !== ctx.auth.userId) {
+      if (targetUserId !== auth.userId) {
         if (!scopeOrgId) {
           throw new TRPCError({
             code: 'FORBIDDEN',
@@ -132,7 +135,7 @@ export const gdprRouter = router({
           .select()
           .from(orgMemberships)
           .where(
-            and(eq(orgMemberships.userId, ctx.auth.userId), eq(orgMemberships.orgId, scopeOrgId))
+            and(eq(orgMemberships.userId, auth.userId), eq(orgMemberships.orgId, scopeOrgId))
           )
           .limit(1);
 
@@ -154,7 +157,7 @@ export const gdprRouter = router({
           type: 'ERASURE',
           status: 'PENDING',
           scopeOrgId,
-          requesterUserId: ctx.auth.userId,
+          requesterUserId: auth.userId,
           targetUserId,
           correlationId,
           requestId: ctx.requestId,
@@ -165,7 +168,7 @@ export const gdprRouter = router({
         const auditEvent = buildAuditEvent({
           eventType: AuditEventTypes.DATA_ERASE_REQUESTED,
           tenantId: scopeOrgId || undefined,
-          actor: buildUserActor(ctx.auth.userId),
+          actor: buildUserActor(auth.userId),
           ip: ctx.ip,
           userAgent: ctx.userAgent,
           requestId: ctx.requestId,
@@ -189,11 +192,11 @@ export const gdprRouter = router({
 
         // Emit domain event
         const domainEvent = createGdprEraseRequestedEvent(
-          scopeOrgId || 'system',
+          scopeOrgId || auth.orgId || 'system',
           {
             requestId,
             targetUserId,
-            requesterUserId: ctx.auth.userId,
+            requesterUserId: auth.userId,
             scopeOrgId,
             mode,
           },
@@ -207,7 +210,7 @@ export const gdprRouter = router({
           eventVersion: domainEvent.eventVersion,
           tenantId: domainEvent.tenantId,
           correlationId: domainEvent.correlationId,
-          payload: domainEvent.payload,
+          payload: domainEvent.payload as Record<string, unknown>,
           occurredAt: domainEvent.occurredAt,
         });
       });
@@ -218,6 +221,7 @@ export const gdprRouter = router({
   getRequestStatus: protectedProcedure
     .input(gdprGetRequestStatusInputSchema)
     .query(async ({ input, ctx }) => {
+      const auth = requireUserAuth(ctx);
       const request = await db
         .select()
         .from(gdprRequests)
@@ -234,7 +238,7 @@ export const gdprRouter = router({
       const req = request[0];
 
       // Authorization: can view if requester or target
-      if (req.requesterUserId !== ctx.auth.userId && req.targetUserId !== ctx.auth.userId) {
+      if (req.requesterUserId !== auth.userId && req.targetUserId !== auth.userId) {
         throw new TRPCError({
           code: 'FORBIDDEN',
           message: 'Not authorized to view this request',
@@ -256,6 +260,7 @@ export const gdprRouter = router({
   downloadExport: protectedProcedure
     .input(gdprDownloadExportInputSchema)
     .query(async ({ input, ctx }) => {
+      const auth = requireUserAuth(ctx);
       const request = await db
         .select()
         .from(gdprRequests)
@@ -272,7 +277,7 @@ export const gdprRouter = router({
       const req = request[0];
 
       // Authorization: can download if requester or target
-      if (req.requesterUserId !== ctx.auth.userId && req.targetUserId !== ctx.auth.userId) {
+      if (req.requesterUserId !== auth.userId && req.targetUserId !== auth.userId) {
         throw new TRPCError({
           code: 'FORBIDDEN',
           message: 'Not authorized to download this export',

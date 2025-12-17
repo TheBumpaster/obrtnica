@@ -8,6 +8,27 @@
       "when": 1765982129642,
       "tag": "0000_overrated_randall",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1765997689327,
+      "tag": "0001_tough_nuke",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1766000088003,
+      "tag": "0002_rare_scrambler",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1766001036218,
+      "tag": "0003_worthless_naoko",
+      "breakpoints": true
     }
   ]
 }

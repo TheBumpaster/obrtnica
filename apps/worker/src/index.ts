@@ -1,6 +1,7 @@
 import 'dotenv/config';
 
 import { startAuditEventConsumer } from './consumers/audit-event-consumer';
+import { startAuthEventsConsumer } from './consumers/auth-events-consumer';
 import { startGdprEraseConsumer } from './consumers/gdpr-erase-consumer';
 import { startGdprExportConsumer } from './consumers/gdpr-export-consumer';
 import { runOutboxDispatcher } from './consumers/outbox-dispatcher';
@@ -23,6 +24,7 @@ async function main() {
     // Start consumers
     await startSampleEventConsumer(channel);
     await startAuditEventConsumer(channel);
+    await startAuthEventsConsumer(channel);
     await startGdprExportConsumer(channel);
     await startGdprEraseConsumer(channel);
     

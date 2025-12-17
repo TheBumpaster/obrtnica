@@ -1,4 +1,5 @@
 import { createSampleEvent, buildDomainWriteAuditEvent, buildUserActor } from '@serp/core';
+import { requireUserAuth } from '@serp/trpc';
 import { sampleCreateInputSchema, sampleCreateOutputSchema, sampleListOutputSchema } from '@serp/validations';
 import { eq } from 'drizzle-orm';
 import { ulid } from 'ulid';
@@ -13,6 +14,7 @@ export const sampleRouter = router({
     .input(sampleCreateInputSchema)
     .output(sampleCreateOutputSchema)
     .mutation(async ({ input, ctx }) => {
+      const auth = requireUserAuth(ctx);
       const id = ulid();
       
       // Transactional insert with outbox pattern
@@ -20,17 +22,13 @@ export const sampleRouter = router({
         // Insert sample entity
         await tx.insert(sampleEntities).values({
           id,
-          orgId: ctx.auth.orgId,
+          orgId: auth.orgId,
           data: input.data,
           version: 0,
         });
 
         // Create and emit domain event
-        const event = createSampleEvent(
-          ctx.auth.orgId,
-          { sampleId: id, data: input.data },
-          ctx.correlationId
-        );
+        const event = createSampleEvent(auth.orgId, { sampleId: id, data: input.data }, ctx.correlationId);
 
         // Write to outbox
         await tx.insert(outboxEvents).values({
@@ -46,8 +44,8 @@ export const sampleRouter = router({
 
         // Emit audit event for data write (Pilot #2)
         const auditEvent = buildDomainWriteAuditEvent({
-          tenantId: ctx.auth.orgId,
-          actor: buildUserActor(ctx.auth.userId),
+          tenantId: auth.orgId,
+          actor: buildUserActor(auth.userId),
           ip: ctx.ip,
           userAgent: ctx.userAgent,
           requestId: ctx.requestId,
@@ -67,10 +65,11 @@ export const sampleRouter = router({
   list: protectedProcedure
     .output(sampleListOutputSchema)
     .query(async ({ ctx }) => {
+      const auth = requireUserAuth(ctx);
       const results = await db
         .select({ id: sampleEntities.id, data: sampleEntities.data })
         .from(sampleEntities)
-        .where(eq(sampleEntities.orgId, ctx.auth.orgId))
+        .where(eq(sampleEntities.orgId, auth.orgId))
         .limit(100);
       
       return results;

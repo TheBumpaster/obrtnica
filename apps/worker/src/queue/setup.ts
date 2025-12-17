@@ -13,6 +13,8 @@ export const QUEUES = {
   GDPR_EXPORT_DLQ: 'gdpr.export.dlq',
   GDPR_ERASE: 'gdpr.erase',
   GDPR_ERASE_DLQ: 'gdpr.erase.dlq',
+  AUTH_EVENTS: 'auth.events',
+  AUTH_EVENTS_DLQ: 'auth.events.dlq',
 } as const;
 
 export async function setupQueues(channel: amqp.Channel): Promise<void> {
@@ -76,6 +78,24 @@ export async function setupQueues(channel: amqp.Channel): Promise<void> {
   });
 
   await channel.bindQueue(QUEUES.GDPR_ERASE, EXCHANGES.DOMAIN_EVENTS, 'gdpr.erase.*');
+
+  // Create auth events queue with DLQ
+  await channel.assertQueue(QUEUES.AUTH_EVENTS_DLQ, { durable: true });
+
+  await channel.assertQueue(QUEUES.AUTH_EVENTS, {
+    durable: true,
+    arguments: {
+      'x-dead-letter-exchange': '',
+      'x-dead-letter-routing-key': QUEUES.AUTH_EVENTS_DLQ,
+      'x-message-ttl': 60000,
+    },
+  });
+
+  // Bind auth events queue to exchange (email verification, password reset, magic link, OTP)
+  await channel.bindQueue(QUEUES.AUTH_EVENTS, EXCHANGES.DOMAIN_EVENTS, 'auth.email_verification.*');
+  await channel.bindQueue(QUEUES.AUTH_EVENTS, EXCHANGES.DOMAIN_EVENTS, 'auth.password_reset.*');
+  await channel.bindQueue(QUEUES.AUTH_EVENTS, EXCHANGES.DOMAIN_EVENTS, 'auth.magic_link.*');
+  await channel.bindQueue(QUEUES.AUTH_EVENTS, EXCHANGES.DOMAIN_EVENTS, 'auth.otp.*');
 
   console.log('Queues and exchanges setup complete');
 }
