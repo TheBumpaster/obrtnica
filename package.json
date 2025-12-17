@@ -1,0 +1,45 @@
+{
+  "name": "serp",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:integration": "turbo run test:integration",
+    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down",
+    "infra:reset": "docker compose down -v && docker compose up -d",
+    "db:generate": "turbo run db:generate",
+    "db:migrate": "turbo run db:migrate",
+    "db:reset": "turbo run db:reset",
+    "web:dev": "turbo run dev --filter=@serp/web",
+    "web:build": "turbo run build --filter=@serp/web",
+    "mobile:dev": "turbo run dev --filter=@serp/mobile",
+    "mobile:build": "turbo run build --filter=@serp/mobile",
+    "desktop:dev": "turbo run dev --filter=@serp/desktop",
+    "desktop:build": "turbo run build --filter=@serp/desktop",
+    "api:dev": "turbo run dev --filter=@serp/api",
+    "api:build": "turbo run build --filter=@serp/api",
+    "api:bundle": "tsx scripts/ci/bundle-node-service.ts api",
+    "worker:dev": "turbo run dev --filter=@serp/worker",
+    "worker:build": "turbo run build --filter=@serp/worker",
+    "worker:bundle": "tsx scripts/ci/bundle-node-service.ts worker"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3",
+    "tsx": "^4.19.2"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}

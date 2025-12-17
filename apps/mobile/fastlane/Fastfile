@@ -1,0 +1,90 @@
+# Fastfile for Serp Mobile (React Native / Expo)
+# Assumes expo prebuild has already generated android/ and ios/ folders
+
+default_platform(:android)
+
+# ============================================
+# Android Lanes
+# ============================================
+platform :android do
+  desc "Build Android APK (debug, for development)"
+  lane :build_apk_debug do
+    gradle(
+      task: "assemble",
+      build_type: "Debug",
+      project_dir: "android"
+    )
+    puts "✓ Debug APK built at: android/app/build/outputs/apk/debug/app-debug.apk"
+  end
+
+  desc "Build Android APK (release, signed)"
+  lane :build_apk_release do
+    gradle(
+      task: "assemble",
+      build_type: "Release",
+      project_dir: "android",
+      properties: {
+        "android.injected.signing.store.file" => ENV['ANDROID_KEYSTORE_FILE'],
+        "android.injected.signing.store.password" => ENV['ANDROID_KEYSTORE_PASSWORD'],
+        "android.injected.signing.key.alias" => ENV['ANDROID_KEY_ALIAS'],
+        "android.injected.signing.key.password" => ENV['ANDROID_KEY_PASSWORD'],
+      }
+    )
+    puts "✓ Release APK built at: android/app/build/outputs/apk/release/app-release.apk"
+  end
+
+  desc "Build Android AAB (release, for Play Store)"
+  lane :build_aab_release do
+    gradle(
+      task: "bundle",
+      build_type: "Release",
+      project_dir: "android",
+      properties: {
+        "android.injected.signing.store.file" => ENV['ANDROID_KEYSTORE_FILE'],
+        "android.injected.signing.store.password" => ENV['ANDROID_KEYSTORE_PASSWORD'],
+        "android.injected.signing.key.alias" => ENV['ANDROID_KEY_ALIAS'],
+        "android.injected.signing.key.password" => ENV['ANDROID_KEY_PASSWORD'],
+      }
+    )
+    puts "✓ Release AAB built at: android/app/build/outputs/bundle/release/app-release.aab"
+  end
+end
+
+# ============================================
+# iOS Lanes
+# ============================================
+platform :ios do
+  desc "Build iOS IPA (release, signed)"
+  lane :build_ipa_release do
+    # Ensure pods are installed
+    cocoapods(
+      clean_install: true,
+      podfile: "ios/Podfile"
+    )
+
+    # Match or manual certificate setup (expects MATCH_PASSWORD or manual cert/profile in CI)
+    if ENV['MATCH_GIT_URL']
+      match(
+        type: "appstore",
+        git_url: ENV['MATCH_GIT_URL'],
+        app_identifier: ENV['IOS_BUNDLE_ID'] || 'com.serp.mobile',
+        readonly: true
+      )
+    else
+      puts "⚠️  Using manual code signing (certificate + provisioning profile expected in CI)"
+      # CI should install cert/profile via import_certificate / install_provisioning_profile
+    end
+
+    # Build
+    build_app(
+      workspace: "ios/serpmobile.xcworkspace",
+      scheme: "serpmobile",
+      export_method: "app-store",
+      output_directory: "ios/build",
+      output_name: "serp-mobile.ipa",
+      clean: true
+    )
+
+    puts "✓ Release IPA built at: ios/build/serp-mobile.ipa"
+  end
+end

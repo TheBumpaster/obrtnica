@@ -1,0 +1,555 @@
+name: Release Artifacts
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to build (e.g., v1.0.0, v1.0.0-dev, v1.0.0-stage)'
+        required: true
+
+jobs:
+  # Parse tag and determine release channel
+  parse-tag:
+    runs-on: ubuntu-latest
+    outputs:
+      version_core: ${{ steps.metadata.outputs.version_core }}
+      release_channel: ${{ steps.metadata.outputs.release_channel }}
+      is_prerelease: ${{ steps.metadata.outputs.is_prerelease }}
+      tag: ${{ steps.metadata.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Parse tag metadata
+        id: metadata
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            export GITHUB_REF_NAME="${{ github.event.inputs.tag }}"
+          fi
+          npx --yes tsx scripts/ci/derive-release-metadata.ts
+
+  # Quality gate (must pass before building artifacts)
+  quality:
+    runs-on: ubuntu-latest
+    needs: parse-tag
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: serp
+          POSTGRES_PASSWORD: serp_dev
+          POSTGRES_DB: serp
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      mongodb:
+        image: mongo:7
+        env:
+          MONGO_INITDB_ROOT_USERNAME: serp
+          MONGO_INITDB_ROOT_PASSWORD: serp_dev
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      rabbitmq:
+        image: rabbitmq:3-management-alpine
+        env:
+          RABBITMQ_DEFAULT_USER: serp
+          RABBITMQ_DEFAULT_PASS: serp_dev
+        ports:
+          - 5672:5672
+          - 15672:15672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://serp:serp_dev@localhost:5432/serp
+      MONGODB_URL: mongodb://serp:serp_dev@localhost:27017/serp?authSource=admin
+      RABBITMQ_URL: amqp://serp:serp_dev@localhost:5672
+      NOTIFICATIONS_DRY_RUN: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run migrations
+        run: pnpm db:migrate
+        working-directory: apps/api
+
+      - name: Run quality checks
+        run: pnpm verify
+
+  # Build Web (Next.js standalone)
+  build-web:
+    runs-on: ubuntu-latest
+    needs: [parse-tag, quality]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Stamp version metadata
+        env:
+          TAG: ${{ needs.parse-tag.outputs.tag }}
+          VERSION_CORE: ${{ needs.parse-tag.outputs.version_core }}
+          RELEASE_CHANNEL: ${{ needs.parse-tag.outputs.release_channel }}
+        run: npx tsx scripts/ci/stamp-versions.ts "$TAG" "$VERSION_CORE" "$RELEASE_CHANNEL"
+
+      - name: Build web
+        run: pnpm web:build
+
+      - name: Package web artifact
+        run: |
+          cd apps/web
+          mkdir -p ../../artifacts/web
+          
+          # Copy standalone output
+          cp -r .next/standalone ../../artifacts/web/standalone
+          cp -r .next/static ../../artifacts/web/standalone/.next/static
+          cp -r public ../../artifacts/web/standalone/public
+          
+          # Copy build metadata
+          if [ -f ../../scripts/ci/build-metadata.json ]; then
+            cp ../../scripts/ci/build-metadata.json ../../artifacts/web/standalone/
+          fi
+          
+          # Create start script
+          cat > ../../artifacts/web/standalone/start.sh << 'EOF'
+          #!/bin/bash
+          node apps/web/server.js
+          EOF
+          chmod +x ../../artifacts/web/standalone/start.sh
+          
+          cat > ../../artifacts/web/standalone/start.bat << 'EOF'
+          @echo off
+          node apps\web\server.js
+          EOF
+          
+          cd ../../artifacts/web
+          zip -r "serp-web_${{ needs.parse-tag.outputs.version_core }}_${{ needs.parse-tag.outputs.release_channel }}_linux-x64.zip" standalone/
+
+      - name: Upload web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-artifact
+          path: artifacts/web/*.zip
+          retention-days: 30
+
+  # Build API and Worker (Node.js services)
+  build-api-worker:
+    runs-on: ubuntu-latest
+    needs: [parse-tag, quality]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Stamp version metadata
+        env:
+          TAG: ${{ needs.parse-tag.outputs.tag }}
+          VERSION_CORE: ${{ needs.parse-tag.outputs.version_core }}
+          RELEASE_CHANNEL: ${{ needs.parse-tag.outputs.release_channel }}
+        run: npx tsx scripts/ci/stamp-versions.ts "$TAG" "$VERSION_CORE" "$RELEASE_CHANNEL"
+
+      - name: Build API
+        run: pnpm api:build
+
+      - name: Build Worker
+        run: pnpm worker:build
+
+      - name: Bundle API
+        run: |
+          pnpm api:bundle
+          cd bundle-api
+          zip -r "../serp-api_${{ needs.parse-tag.outputs.version_core }}_${{ needs.parse-tag.outputs.release_channel }}_linux-x64.zip" .
+
+      - name: Bundle Worker
+        run: |
+          pnpm worker:bundle
+          cd bundle-worker
+          zip -r "../serp-worker_${{ needs.parse-tag.outputs.version_core }}_${{ needs.parse-tag.outputs.release_channel }}_linux-x64.zip" .
+
+      - name: Upload API artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-artifact
+          path: serp-api_*.zip
+          retention-days: 30
+
+      - name: Upload Worker artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: worker-artifact
+          path: serp-worker_*.zip
+          retention-days: 30
+
+  # Build Desktop (Electron) - Matrix for each OS
+  build-desktop:
+    runs-on: ${{ matrix.os }}
+    needs: [parse-tag, quality]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Development: Windows + Linux only
+          - os: windows-latest
+            platform: windows-x64
+            channel_filter: 'dev|stage|prod'
+          - os: ubuntu-latest
+            platform: linux-x64
+            channel_filter: 'dev|stage|prod'
+          # Staging + Production: add macOS
+          - os: macos-latest
+            platform: macos-arm64
+            channel_filter: 'stage|prod'
+
+    # Skip matrix entries that don't match the release channel
+    if: |
+      (matrix.channel_filter == 'dev|stage|prod') ||
+      (matrix.channel_filter == 'stage|prod' && needs.parse-tag.outputs.release_channel != 'dev')
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Stamp version metadata
+        env:
+          TAG: ${{ needs.parse-tag.outputs.tag }}
+          VERSION_CORE: ${{ needs.parse-tag.outputs.version_core }}
+          RELEASE_CHANNEL: ${{ needs.parse-tag.outputs.release_channel }}
+        run: npx tsx scripts/ci/stamp-versions.ts "$TAG" "$VERSION_CORE" "$RELEASE_CHANNEL"
+
+      - name: Build desktop
+        run: pnpm desktop:build
+
+      - name: Package desktop artifact (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cd apps/desktop/release
+          mkdir -p ../../../artifacts/desktop
+          zip -r "../../../artifacts/desktop/serp-desktop_${{ needs.parse-tag.outputs.version_core }}_${{ needs.parse-tag.outputs.release_channel }}_${{ matrix.platform }}.zip" .
+
+      - name: Package desktop artifact (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          cd apps/desktop/release
+          Compress-Archive -Path * -DestinationPath "../../../artifacts/desktop/serp-desktop_${{ needs.parse-tag.outputs.version_core }}_${{ needs.parse-tag.outputs.release_channel }}_${{ matrix.platform }}.zip"
+
+      - name: Upload desktop artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-artifact-${{ matrix.platform }}
+          path: artifacts/desktop/*.zip
+          retention-days: 30
+
+  # Build Mobile Android
+  build-mobile-android:
+    runs-on: ubuntu-latest
+    needs: [parse-tag, quality]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+          working-directory: apps/mobile/fastlane
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Stamp version metadata
+        env:
+          TAG: ${{ needs.parse-tag.outputs.tag }}
+          VERSION_CORE: ${{ needs.parse-tag.outputs.version_core }}
+          RELEASE_CHANNEL: ${{ needs.parse-tag.outputs.release_channel }}
+        run: npx tsx scripts/ci/stamp-versions.ts "$TAG" "$VERSION_CORE" "$RELEASE_CHANNEL"
+
+      - name: Expo prebuild
+        working-directory: apps/mobile
+        run: npx --yes expo prebuild --platform android --clean --non-interactive
+
+      - name: Decode Android keystore
+        if: needs.parse-tag.outputs.release_channel != 'dev'
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > apps/mobile/android/app/release.keystore
+
+      - name: Build Android (dev - debug APK)
+        if: needs.parse-tag.outputs.release_channel == 'dev'
+        working-directory: apps/mobile
+        run: bundle exec fastlane android build_apk_debug
+
+      - name: Build Android (stage/prod - release APK + AAB)
+        if: needs.parse-tag.outputs.release_channel != 'dev'
+        working-directory: apps/mobile
+        env:
+          ANDROID_KEYSTORE_FILE: ${{ github.workspace }}/apps/mobile/android/app/release.keystore
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          bundle exec fastlane android build_apk_release
+          bundle exec fastlane android build_aab_release
+
+      - name: Rename and collect artifacts (dev)
+        if: needs.parse-tag.outputs.release_channel == 'dev'
+        run: |
+          mkdir -p artifacts/mobile
+          cp apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk \
+             "artifacts/mobile/serp-mobile_${{ needs.parse-tag.outputs.version_core }}_${{ needs.parse-tag.outputs.release_channel }}_android.apk"
+
+      - name: Rename and collect artifacts (stage/prod)
+        if: needs.parse-tag.outputs.release_channel != 'dev'
+        run: |
+          mkdir -p artifacts/mobile
+          cp apps/mobile/android/app/build/outputs/apk/release/app-release.apk \
+             "artifacts/mobile/serp-mobile_${{ needs.parse-tag.outputs.version_core }}_${{ needs.parse-tag.outputs.release_channel }}_android.apk"
+          cp apps/mobile/android/app/build/outputs/bundle/release/app-release.aab \
+             "artifacts/mobile/serp-mobile_${{ needs.parse-tag.outputs.version_core }}_${{ needs.parse-tag.outputs.release_channel }}_android.aab"
+
+      - name: Upload mobile Android artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-android-artifact
+          path: artifacts/mobile/*
+          retention-days: 30
+
+  # Build Mobile iOS (stage and prod only)
+  build-mobile-ios:
+    runs-on: macos-latest
+    needs: [parse-tag, quality]
+    if: needs.parse-tag.outputs.release_channel != 'dev'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+          working-directory: apps/mobile/fastlane
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Stamp version metadata
+        env:
+          TAG: ${{ needs.parse-tag.outputs.tag }}
+          VERSION_CORE: ${{ needs.parse-tag.outputs.version_core }}
+          RELEASE_CHANNEL: ${{ needs.parse-tag.outputs.release_channel }}
+        run: npx tsx scripts/ci/stamp-versions.ts "$TAG" "$VERSION_CORE" "$RELEASE_CHANNEL"
+
+      - name: Expo prebuild
+        working-directory: apps/mobile
+        run: npx --yes expo prebuild --platform ios --clean --non-interactive
+
+      - name: Install CocoaPods
+        working-directory: apps/mobile/ios
+        run: pod install
+
+      - name: Setup iOS signing (Fastlane Match or manual)
+        env:
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
+        run: |
+          echo "iOS signing configured via Fastlane Match or manual cert/profile"
+
+      - name: Build iOS IPA
+        working-directory: apps/mobile
+        env:
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
+        run: bundle exec fastlane ios build_ipa_release
+
+      - name: Rename and collect IPA
+        run: |
+          mkdir -p artifacts/mobile
+          cp apps/mobile/ios/build/serp-mobile.ipa \
+             "artifacts/mobile/serp-mobile_${{ needs.parse-tag.outputs.version_core }}_${{ needs.parse-tag.outputs.release_channel }}_ios.ipa"
+
+      - name: Upload mobile iOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-ios-artifact
+          path: artifacts/mobile/*.ipa
+          retention-days: 30
+
+  # Create GitHub Release and attach all artifacts
+  release:
+    runs-on: ubuntu-latest
+    needs:
+      - parse-tag
+      - quality
+      - build-web
+      - build-api-worker
+      - build-desktop
+      - build-mobile-android
+      - build-mobile-ios
+    if: always() && needs.parse-tag.result == 'success' && needs.quality.result == 'success'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+
+      - name: List artifacts
+        run: find release-artifacts -type f
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.parse-tag.outputs.tag }}
+          name: Release ${{ needs.parse-tag.outputs.tag }}
+          prerelease: ${{ needs.parse-tag.outputs.is_prerelease == 'true' }}
+          generate_release_notes: true
+          files: |
+            release-artifacts/**/*.zip
+            release-artifacts/**/*.apk
+            release-artifacts/**/*.aab
+            release-artifacts/**/*.ipa
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

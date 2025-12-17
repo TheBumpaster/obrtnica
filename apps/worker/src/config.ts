@@ -1,0 +1,41 @@
+import { z } from 'zod';
+
+const configSchema = z.object({
+  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  DATABASE_URL: z.string(),
+  MONGODB_URL: z.string(),
+  RABBITMQ_URL: z.string(),
+  WORKER_CONCURRENCY: z.string().default('5'),
+  NOTIFICATIONS_DRY_RUN: z.string().default('true'),
+  MAILJET_API_KEY: z.string().optional(),
+  MAILJET_SECRET_KEY: z.string().optional(),
+  TWILIO_ACCOUNT_SID: z.string().optional(),
+  TWILIO_AUTH_TOKEN: z.string().optional(),
+  TWILIO_PHONE_NUMBER: z.string().optional(),
+  FCM_SERVER_KEY: z.string().optional(),
+  APNS_KEY_ID: z.string().optional(),
+  APNS_TEAM_ID: z.string().optional(),
+  APNS_BUNDLE_ID: z.string().optional(),
+  APNS_PRIVATE_KEY_PATH: z.string().optional(),
+  APNS_PRODUCTION: z.string().default('false'),
+});
+
+export const config = configSchema.parse({
+  NODE_ENV: process.env.NODE_ENV,
+  DATABASE_URL: process.env.DATABASE_URL,
+  MONGODB_URL: process.env.MONGODB_URL,
+  RABBITMQ_URL: process.env.RABBITMQ_URL,
+  WORKER_CONCURRENCY: process.env.WORKER_CONCURRENCY,
+  NOTIFICATIONS_DRY_RUN: process.env.NOTIFICATIONS_DRY_RUN,
+  MAILJET_API_KEY: process.env.MAILJET_API_KEY,
+  MAILJET_SECRET_KEY: process.env.MAILJET_SECRET_KEY,
+  TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID,
+  TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN,
+  TWILIO_PHONE_NUMBER: process.env.TWILIO_PHONE_NUMBER,
+  FCM_SERVER_KEY: process.env.FCM_SERVER_KEY,
+  APNS_KEY_ID: process.env.APNS_KEY_ID,
+  APNS_TEAM_ID: process.env.APNS_TEAM_ID,
+  APNS_BUNDLE_ID: process.env.APNS_BUNDLE_ID,
+  APNS_PRIVATE_KEY_PATH: process.env.APNS_PRIVATE_KEY_PATH,
+  APNS_PRODUCTION: process.env.APNS_PRODUCTION,
+});

@@ -1,0 +1,70 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Local env files
+.env
+.env*.local
+
+# Vercel
+.vercel
+
+# Turbo
+.turbo
+
+# Typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# Electron
+apps/desktop/release/
+apps/desktop/app/
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+
+# CI/CD artifacts
+bundle-api/
+bundle-worker/
+artifacts/
+scripts/ci/build-metadata.json
+*.zip
+*.apk
+*.aab
+*.ipa
