@@ -1,6 +1,9 @@
+import { createChildLogger } from '@serp/core';
 import fetch from 'node-fetch';
 
 import { config } from '../config';
+
+const logger = createChildLogger({ component: 'fcm-adapter' });
 
 export interface FcmPayload {
   token: string;
@@ -20,10 +23,7 @@ export class FcmAdapter {
 
   async sendPush(payload: FcmPayload): Promise<{ success: boolean; invalidToken?: boolean }> {
     if (this.dryRun || !this.serverKey) {
-      console.log('[DRY RUN] Would send FCM push:', {
-        token: payload.token.substring(0, 20) + '...',
-        title: payload.title,
-      });
+      logger.debug({ tokenPrefix: payload.token.substring(0, 20), title: payload.title }, '[DRY RUN] Would send FCM push');
       return { success: true };
     }
 
@@ -49,15 +49,15 @@ export class FcmAdapter {
       if (result.failure > 0 && result.results && result.results[0]?.error) {
         const error = result.results[0].error;
         if (error === 'InvalidRegistration' || error === 'NotRegistered') {
-          console.log(`Invalid FCM token: ${payload.token}`);
+          logger.warn({ tokenPrefix: payload.token.substring(0, 20) }, 'Invalid FCM token');
           return { success: false, invalidToken: true };
         }
       }
       
-      console.log(`Sent FCM push to token ${payload.token.substring(0, 20)}...`);
+      logger.debug({ tokenPrefix: payload.token.substring(0, 20) }, 'Sent FCM push');
       return { success: result.success > 0 };
     } catch (err) {
-      console.error('FCM send error:', err);
+      logger.error({ err }, 'FCM send error');
       throw err;
     }
   }

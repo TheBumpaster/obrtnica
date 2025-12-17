@@ -1,3 +1,4 @@
+import { createChildLogger } from '@serp/core';
 import type amqp from 'amqplib';
 import { eq } from 'drizzle-orm';
 import { ulid } from 'ulid';
@@ -7,12 +8,14 @@ import { consumeAuthOtpEvent } from './auth-otp-consumer';
 import { db, processedEvents } from '../db';
 import { QUEUES } from '../queue/setup';
 
+const logger = createChildLogger({ component: 'auth-events-consumer' });
+
 /**
  * Start auth events consumer
  * Handles email verification, password reset, magic links, and OTP codes
  */
 export async function startAuthEventsConsumer(channel: amqp.Channel): Promise<void> {
-  console.log('Starting auth events consumer...');
+  logger.info('Starting auth events consumer...');
 
   // Single queue handles all auth events (they're filtered by binding in setup)
   await channel.consume(QUEUES.AUTH_EVENTS, async (msg) => {
@@ -29,7 +32,7 @@ export async function startAuthEventsConsumer(channel: amqp.Channel): Promise<vo
         .limit(1);
 
       if (existing.length > 0) {
-        console.log(`Event ${event.eventId} already processed, skipping`);
+        logger.debug({ eventId: event.eventId }, 'Event already processed, skipping');
         channel.ack(msg);
         return;
       }
@@ -50,13 +53,13 @@ export async function startAuthEventsConsumer(channel: amqp.Channel): Promise<vo
       });
 
       channel.ack(msg);
-      console.log(`Processed auth event: ${event.eventType} (${event.eventId})`);
+      logger.info({ eventType: event.eventType, eventId: event.eventId }, 'Processed auth event');
     } catch (error) {
-      console.error(`Error processing auth event:`, error);
+      logger.error({ err: error }, 'Error processing auth event');
       // Negative acknowledgment - message will be requeued
       channel.nack(msg, false, true);
     }
   });
 
-  console.log(`Auth events consumer started (queue: ${QUEUES.AUTH_EVENTS})`);
+  logger.info({ queue: QUEUES.AUTH_EVENTS }, 'Auth events consumer started');
 }

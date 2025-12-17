@@ -1,9 +1,10 @@
-import type { DomainEvent } from '@serp/core';
+import { createChildLogger, type DomainEvent } from '@serp/core';
 
 import { MailjetAdapter } from '../adapters/mailjet';
 import { config } from '../config';
 
 const mailjet = new MailjetAdapter(config.NOTIFICATIONS_DRY_RUN === 'true');
+const logger = createChildLogger({ component: 'auth-email-consumer' });
 
 interface EmailVerificationPayload {
   userId: string;
@@ -48,7 +49,7 @@ export async function consumeAuthEmailEvent(event: DomainEvent): Promise<void> {
           `,
         });
 
-        console.log(`Sent email verification to ${payload.email} for user ${payload.userId}`);
+        logger.info({ userId: payload.userId, email: payload.email }, 'Sent email verification');
         break;
       }
 
@@ -71,7 +72,7 @@ export async function consumeAuthEmailEvent(event: DomainEvent): Promise<void> {
           `,
         });
 
-        console.log(`Sent password reset email to ${payload.email} for user ${payload.userId}`);
+        logger.info({ userId: payload.userId, email: payload.email }, 'Sent password reset email');
         break;
       }
 
@@ -94,15 +95,15 @@ export async function consumeAuthEmailEvent(event: DomainEvent): Promise<void> {
           `,
         });
 
-        console.log(`Sent magic link to ${payload.email} for user ${payload.userId}`);
+        logger.info({ userId: payload.userId, email: payload.email }, 'Sent magic link');
         break;
       }
 
       default:
-        console.warn(`Unknown auth email event type: ${event.eventType}`);
+        logger.warn({ eventType: event.eventType }, 'Unknown auth email event type');
     }
   } catch (error) {
-    console.error(`Error processing auth email event ${event.eventType}:`, error);
+    logger.error({ err: error, eventType: event.eventType }, 'Error processing auth email event');
     throw error;
   }
 }

@@ -36,6 +36,7 @@ export * from './workspaces/workspace-member-roles';
 export * from './notifications/in-app-notifications';
 export * from './notifications/notification-preferences';
 export * from './notifications/device-tokens';
+export * from './notifications/phone-verification-tokens';
 
 // Events
 export * from './events/outbox-events';

@@ -1,4 +1,4 @@
-import { EventTypes } from '@serp/core';
+import { EventTypes, createChildLogger } from '@serp/core';
 import type amqp from 'amqplib';
 import { eq } from 'drizzle-orm';
 import { ulid } from 'ulid';
@@ -6,6 +6,8 @@ import { z } from 'zod';
 
 import { auditEvents, db, processedEvents } from '../db';
 import { QUEUES } from '../queue/setup';
+
+const logger = createChildLogger({ component: 'audit-event-consumer' });
 
 // Zod schema for validating audit event payload from queue
 const auditEventPayloadSchema = z.object({
@@ -35,7 +37,7 @@ const auditEventPayloadSchema = z.object({
 });
 
 export async function startAuditEventConsumer(channel: amqp.Channel): Promise<void> {
-  console.log('Starting audit event consumer...');
+  logger.info('Starting audit event consumer...');
 
   await channel.consume(QUEUES.AUDIT_EVENTS, async (msg) => {
     if (!msg) return;
@@ -51,7 +53,7 @@ export async function startAuditEventConsumer(channel: amqp.Channel): Promise<vo
         .limit(1);
 
       if (existing.length > 0) {
-        console.log(`Event ${event.eventId} already processed, skipping`);
+        logger.debug({ eventId: event.eventId }, 'Event already processed, skipping');
         channel.ack(msg);
         return;
       }
@@ -69,9 +71,9 @@ export async function startAuditEventConsumer(channel: amqp.Channel): Promise<vo
       });
 
       channel.ack(msg);
-      console.log(`Processed audit event ${event.eventId}`);
+      logger.info({ eventId: event.eventId }, 'Processed audit event');
     } catch (err) {
-      console.error('Error processing audit event:', err);
+      logger.error({ err }, 'Error processing audit event');
       // Reject and requeue (will go to DLQ after TTL)
       channel.nack(msg, false, false);
     }
@@ -88,7 +90,7 @@ async function handleAuditEventCreated(event: {
   const validationResult = auditEventPayloadSchema.safeParse(event.payload);
 
   if (!validationResult.success) {
-    console.error('Invalid audit event payload:', validationResult.error);
+    logger.error({ error: validationResult.error }, 'Invalid audit event payload');
     throw new Error('Invalid audit event payload');
   }
 
@@ -119,7 +121,5 @@ async function handleAuditEventCreated(event: {
     metadata: auditEvent.metadata || null,
   });
 
-  console.log(
-    `Wrote audit event ${auditEvent.id} (${auditEvent.eventType}) to audit_events table`
-  );
+  logger.debug({ auditEventId: auditEvent.id, eventType: auditEvent.eventType }, 'Wrote audit event to audit_events table');
 }

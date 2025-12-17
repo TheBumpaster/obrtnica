@@ -1,7 +1,10 @@
+import { createChildLogger } from '@serp/core';
 import type { Channel, Connection } from 'amqplib';
 import { connect } from 'amqplib';
 
 import { config } from '../config';
+
+const logger = createChildLogger({ component: 'rabbitmq-connection' });
 
 let connection: Connection | null = null;
 let channel: Channel | null = null;
@@ -10,12 +13,12 @@ export async function getConnection(): Promise<Connection> {
   if (!connection) {
     connection = (await connect(config.RABBITMQ_URL)) as unknown as Connection;
     connection.on('error', (err: Error) => {
-      console.error('RabbitMQ connection error:', err);
+      logger.error({ err }, 'RabbitMQ connection error');
       connection = null;
       channel = null;
     });
     connection.on('close', () => {
-      console.log('RabbitMQ connection closed');
+      logger.info('RabbitMQ connection closed');
       connection = null;
       channel = null;
     });
@@ -33,11 +36,11 @@ export async function getChannel(): Promise<Channel> {
     await channel.prefetch(parseInt(config.WORKER_CONCURRENCY, 10));
     
     channel.on('error', (err: Error) => {
-      console.error('RabbitMQ channel error:', err);
+      logger.error({ err }, 'RabbitMQ channel error');
       channel = null;
     });
     channel.on('close', () => {
-      console.log('RabbitMQ channel closed');
+      logger.info('RabbitMQ channel closed');
       channel = null;
     });
   }

@@ -6,6 +6,7 @@ const configSchema = z.object({
   DATABASE_URL: z.string(),
   RABBITMQ_URL: z.string().optional(),
   CORS_ORIGIN: z.string().default('*'),
+  LOG_LEVEL: z.string().default('info'),
 });
 
 export const config = configSchema.parse({
@@ -14,4 +15,5 @@ export const config = configSchema.parse({
   DATABASE_URL: process.env.DATABASE_URL,
   RABBITMQ_URL: process.env.RABBITMQ_URL,
   CORS_ORIGIN: process.env.CORS_ORIGIN,
+  LOG_LEVEL: process.env.LOG_LEVEL,
 });

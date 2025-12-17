@@ -1,4 +1,4 @@
-import type { NotificationDelivery } from '@serp/core';
+import { createChildLogger, type NotificationDelivery } from '@serp/core';
 import { eq } from 'drizzle-orm';
 
 
@@ -8,6 +8,8 @@ import { MailjetAdapter } from '../adapters/mailjet';
 import { TwilioAdapter } from '../adapters/twilio';
 import { config } from '../config';
 import { db, deviceTokens } from '../db';
+
+const logger = createChildLogger({ component: 'notification-service' });
 
 export class NotificationService {
   private mailjetAdapter: MailjetAdapter;
@@ -66,7 +68,7 @@ export class NotificationService {
             data: delivery.payload.data as Record<string, unknown> | undefined,
           });
         } else {
-          console.warn(`Unknown platform: ${deviceToken.platform}`);
+          logger.warn({ platform: deviceToken.platform }, 'Unknown platform');
           continue;
         }
 
@@ -78,7 +80,7 @@ export class NotificationService {
             .where(eq(deviceTokens.id, deviceToken.id));
         }
       } catch (err) {
-        console.error(`Failed to send push to token ${deviceToken.id}:`, err);
+        logger.error({ err, tokenId: deviceToken.id }, 'Failed to send push to token');
         // Don't throw - continue with other tokens
       }
     }

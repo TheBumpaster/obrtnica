@@ -3,6 +3,7 @@ import {
   buildAuditEvent,
   buildSystemActor,
   createAuditEventCreated,
+  createChildLogger,
   createGdprService,
   DataCategories,
   DataClassifications,
@@ -26,8 +27,10 @@ const gdprErasePayloadSchema = z.object({
   mode: z.enum(['ANONYMIZE', 'DELETE']),
 });
 
+const logger = createChildLogger({ component: 'gdpr-erase-consumer' });
+
 export async function startGdprEraseConsumer(channel: amqp.Channel): Promise<void> {
-  console.log('Starting GDPR erase consumer...');
+  logger.info('Starting GDPR erase consumer...');
 
   await channel.consume(QUEUES.GDPR_ERASE, async (msg) => {
     if (!msg) return;
@@ -43,7 +46,7 @@ export async function startGdprEraseConsumer(channel: amqp.Channel): Promise<voi
         .limit(1);
 
       if (existing.length > 0) {
-        console.log(`Event ${event.eventId} already processed, skipping`);
+        logger.debug({ eventId: event.eventId }, 'Event already processed, skipping');
         channel.ack(msg);
         return;
       }
@@ -61,9 +64,9 @@ export async function startGdprEraseConsumer(channel: amqp.Channel): Promise<voi
       });
 
       channel.ack(msg);
-      console.log(`Processed GDPR erase event ${event.eventId}`);
+      logger.info({ eventId: event.eventId }, 'Processed GDPR erase event');
     } catch (err) {
-      console.error('Error processing GDPR erase event:', err);
+      logger.error({ err }, 'Error processing GDPR erase event');
       channel.nack(msg, false, false);
     }
   });
@@ -78,7 +81,7 @@ async function handleGdprEraseRequested(event: {
   const validationResult = gdprErasePayloadSchema.safeParse(event.payload);
 
   if (!validationResult.success) {
-    console.error('Invalid GDPR erase payload:', validationResult.error);
+    logger.error({ error: validationResult.error }, 'Invalid GDPR erase payload');
     throw new Error('Invalid GDPR erase payload');
   }
 
@@ -147,9 +150,9 @@ async function handleGdprEraseRequested(event: {
       });
     });
 
-    console.log(`Erasure completed for request ${requestId}`);
+    logger.info({ requestId }, 'Erasure completed');
   } catch (error) {
-    console.error(`Erasure failed for request ${requestId}:`, error);
+    logger.error({ err: error, requestId }, 'Erasure failed');
 
     // Update to FAILED with reason
     await db.transaction(async (tx) => {
@@ -215,12 +218,12 @@ async function cleanupMongoProjections(targetUserId: string, scopeOrgId: string 
     } else {
       // For global erasure, we could delete all user-related projections
       // Currently sample_projections don't have userId, so we skip
-      console.log('Global erasure: no user-scoped projections to clean in Mongo');
+      logger.debug('Global erasure: no user-scoped projections to clean in Mongo');
     }
 
-    console.log('Mongo projections cleanup completed (best-effort)');
+    logger.debug('Mongo projections cleanup completed (best-effort)');
   } catch (error) {
-    console.error('Mongo cleanup failed (non-fatal):', error);
+    logger.error({ err: error }, 'Mongo cleanup failed (non-fatal)');
     // Don't throw - Mongo cleanup is best-effort
   }
 }

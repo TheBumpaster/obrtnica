@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-import { AuditEventTypes, buildAuditEvent, buildUserActor, DataCategories, DataClassifications } from '@serp/core';
+import { AuditEventTypes, buildAuditEvent, buildUserActor, DataCategories, DataClassifications , createChildLogger } from '@serp/core';
 import { setPermissionLoader, setAuthContextBuilder, setAuditFailureCallback } from '@serp/trpc';
 import cors from 'cors';
 import express, { json } from 'express';
@@ -71,8 +71,10 @@ app.get('/health', (_req, res) => {
 // tRPC endpoint
 app.use('/trpc', createExpressAdapter(appRouter));
 
+
+const logger = createChildLogger({ component: 'api-server' });
+
 const port = parseInt(config.PORT, 10);
 app.listen(port, () => {
-  console.log(`API server running on http://localhost:${port}`);
-  console.log(`tRPC endpoint: http://localhost:${port}/trpc`);
+  logger.info({ port, trpcEndpoint: `/trpc` }, 'API server started');
 });

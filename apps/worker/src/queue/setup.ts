@@ -1,4 +1,9 @@
+import { createChildLogger } from '@serp/core';
 import type amqp from 'amqplib';
+
+import { retryConfig } from './retry';
+
+const logger = createChildLogger({ component: 'queue-setup' });
 
 export const EXCHANGES = {
   DOMAIN_EVENTS: 'domain.events',
@@ -15,6 +20,8 @@ export const QUEUES = {
   GDPR_ERASE_DLQ: 'gdpr.erase.dlq',
   AUTH_EVENTS: 'auth.events',
   AUTH_EVENTS_DLQ: 'auth.events.dlq',
+  NOTIFICATIONS: 'notifications',
+  NOTIFICATIONS_DLQ: 'notifications.dlq',
 } as const;
 
 export async function setupQueues(channel: amqp.Channel): Promise<void> {
@@ -29,7 +36,7 @@ export async function setupQueues(channel: amqp.Channel): Promise<void> {
     arguments: {
       'x-dead-letter-exchange': '',
       'x-dead-letter-routing-key': QUEUES.SAMPLE_EVENTS_DLQ,
-      'x-message-ttl': 60000, // 60 seconds before going to DLQ
+      'x-message-ttl': retryConfig.dlqTtlMs, // Configurable TTL before going to DLQ
     },
   });
 
@@ -44,7 +51,7 @@ export async function setupQueues(channel: amqp.Channel): Promise<void> {
     arguments: {
       'x-dead-letter-exchange': '',
       'x-dead-letter-routing-key': QUEUES.AUDIT_EVENTS_DLQ,
-      'x-message-ttl': 60000, // 60 seconds before going to DLQ
+      'x-message-ttl': retryConfig.dlqTtlMs, // Configurable TTL before going to DLQ
     },
   });
 
@@ -59,7 +66,7 @@ export async function setupQueues(channel: amqp.Channel): Promise<void> {
     arguments: {
       'x-dead-letter-exchange': '',
       'x-dead-letter-routing-key': QUEUES.GDPR_EXPORT_DLQ,
-      'x-message-ttl': 60000,
+      'x-message-ttl': retryConfig.dlqTtlMs,
     },
   });
 
@@ -73,7 +80,7 @@ export async function setupQueues(channel: amqp.Channel): Promise<void> {
     arguments: {
       'x-dead-letter-exchange': '',
       'x-dead-letter-routing-key': QUEUES.GDPR_ERASE_DLQ,
-      'x-message-ttl': 60000,
+      'x-message-ttl': retryConfig.dlqTtlMs,
     },
   });
 
@@ -87,7 +94,7 @@ export async function setupQueues(channel: amqp.Channel): Promise<void> {
     arguments: {
       'x-dead-letter-exchange': '',
       'x-dead-letter-routing-key': QUEUES.AUTH_EVENTS_DLQ,
-      'x-message-ttl': 60000,
+      'x-message-ttl': retryConfig.dlqTtlMs,
     },
   });
 
@@ -97,5 +104,27 @@ export async function setupQueues(channel: amqp.Channel): Promise<void> {
   await channel.bindQueue(QUEUES.AUTH_EVENTS, EXCHANGES.DOMAIN_EVENTS, 'auth.magic_link.*');
   await channel.bindQueue(QUEUES.AUTH_EVENTS, EXCHANGES.DOMAIN_EVENTS, 'auth.otp.*');
 
-  console.log('Queues and exchanges setup complete');
+  // Create notifications queue with DLQ
+  await channel.assertQueue(QUEUES.NOTIFICATIONS_DLQ, { durable: true });
+
+  await channel.assertQueue(QUEUES.NOTIFICATIONS, {
+    durable: true,
+    arguments: {
+      'x-dead-letter-exchange': '',
+      'x-dead-letter-routing-key': QUEUES.NOTIFICATIONS_DLQ,
+      'x-message-ttl': retryConfig.dlqTtlMs,
+    },
+  });
+
+  await channel.bindQueue(QUEUES.NOTIFICATIONS, EXCHANGES.DOMAIN_EVENTS, 'notification.*');
+
+  logger.info(
+    {
+      retryMaxAttempts: retryConfig.maxAttempts,
+      retryInitialDelayMs: retryConfig.initialDelayMs,
+      retryBackoffMultiplier: retryConfig.backoffMultiplier,
+      dlqTtlMs: retryConfig.dlqTtlMs,
+    },
+    'Queues and exchanges setup complete with retry policy'
+  );
 }

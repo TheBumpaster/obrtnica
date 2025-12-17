@@ -3,6 +3,7 @@ import {
   buildAuditEvent,
   buildSystemActor,
   createAuditEventCreated,
+  createChildLogger,
   createGdprService,
   DataCategories,
   DataClassifications,
@@ -30,9 +31,10 @@ const storageAdapter = new LocalFsStorageAdapter({
 });
 
 const gdprService = createGdprService(new DrizzleGdprRepository(db));
+const logger = createChildLogger({ component: 'gdpr-export-consumer' });
 
 export async function startGdprExportConsumer(channel: amqp.Channel): Promise<void> {
-  console.log('Starting GDPR export consumer...');
+  logger.info('Starting GDPR export consumer...');
 
   await channel.consume(QUEUES.GDPR_EXPORT, async (msg) => {
     if (!msg) return;
@@ -48,7 +50,7 @@ export async function startGdprExportConsumer(channel: amqp.Channel): Promise<vo
         .limit(1);
 
       if (existing.length > 0) {
-        console.log(`Event ${event.eventId} already processed, skipping`);
+        logger.debug({ eventId: event.eventId }, 'Event already processed, skipping');
         channel.ack(msg);
         return;
       }
@@ -66,9 +68,9 @@ export async function startGdprExportConsumer(channel: amqp.Channel): Promise<vo
       });
 
       channel.ack(msg);
-      console.log(`Processed GDPR export event ${event.eventId}`);
+      logger.info({ eventId: event.eventId }, 'Processed GDPR export event');
     } catch (err) {
-      console.error('Error processing GDPR export event:', err);
+      logger.error({ err }, 'Error processing GDPR export event');
       channel.nack(msg, false, false);
     }
   });
@@ -83,7 +85,7 @@ async function handleGdprExportRequested(event: {
   const validationResult = gdprExportPayloadSchema.safeParse(event.payload);
 
   if (!validationResult.success) {
-    console.error('Invalid GDPR export payload:', validationResult.error);
+    logger.error({ error: validationResult.error }, 'Invalid GDPR export payload');
     throw new Error('Invalid GDPR export payload');
   }
 
@@ -164,9 +166,9 @@ async function handleGdprExportRequested(event: {
       });
     });
 
-    console.log(`Export completed for request ${requestId}`);
+    logger.info({ requestId }, 'Export completed');
   } catch (error) {
-    console.error(`Export failed for request ${requestId}:`, error);
+    logger.error({ err: error, requestId }, 'Export failed');
 
     // Update to FAILED with reason
     await db.transaction(async (tx) => {

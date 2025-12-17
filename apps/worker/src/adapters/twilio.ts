@@ -1,6 +1,9 @@
+import { createChildLogger } from '@serp/core';
 import twilio from 'twilio';
 
 import { config } from '../config';
+
+const logger = createChildLogger({ component: 'twilio-adapter' });
 
 export interface SmsPayload {
   to: string;
@@ -23,10 +26,7 @@ export class TwilioAdapter {
 
   async sendSms(payload: SmsPayload): Promise<void> {
     if (this.dryRun || !this.client) {
-      console.log('[DRY RUN] Would send SMS via Twilio:', {
-        to: payload.to,
-        body: payload.body.substring(0, 50) + '...',
-      });
+      logger.debug({ to: payload.to, bodyPrefix: payload.body.substring(0, 50) }, '[DRY RUN] Would send SMS via Twilio');
       return;
     }
 
@@ -37,9 +37,9 @@ export class TwilioAdapter {
         body: payload.body,
       });
       
-      console.log(`Sent SMS to ${payload.to} via Twilio`);
+      logger.info({ to: payload.to }, 'Sent SMS via Twilio');
     } catch (err) {
-      console.error('Twilio send error:', err);
+      logger.error({ err, to: payload.to }, 'Twilio send error');
       throw err;
     }
   }

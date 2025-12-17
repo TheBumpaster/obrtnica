@@ -1,4 +1,4 @@
-import type { AuditEvent, ValidatedPrincipal } from '@serp/core';
+import type { AuditEvent, Logger, ValidatedPrincipal } from '@serp/core';
 import { z } from 'zod';
 
 import type { AuthenticatedPrincipal } from './middleware';
@@ -22,4 +22,5 @@ export type Context = z.infer<typeof contextSchema> & {
     log: (auditEvent: AuditEvent) => Promise<void>;
   };
   auth?: AuthenticatedPrincipal;
+  logger?: Logger;
 };

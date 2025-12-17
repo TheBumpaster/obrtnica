@@ -1,4 +1,4 @@
-import { EventTypes } from '@serp/core';
+import { EventTypes, createChildLogger, metrics } from '@serp/core';
 import type amqp from 'amqplib';
 import { eq } from 'drizzle-orm';
 import { ulid } from 'ulid';
@@ -7,8 +7,10 @@ import { db, processedEvents } from '../db';
 import { getMongoClient } from '../mongo';
 import { QUEUES } from '../queue/setup';
 
+const logger = createChildLogger({ component: 'sample-event-consumer' });
+
 export async function startSampleEventConsumer(channel: amqp.Channel): Promise<void> {
-  console.log('Starting sample event consumer...');
+  logger.info('Starting sample event consumer...');
   
   await channel.consume(QUEUES.SAMPLE_EVENTS, async (msg) => {
     if (!msg) return;
@@ -24,27 +26,34 @@ export async function startSampleEventConsumer(channel: amqp.Channel): Promise<v
         .limit(1);
       
       if (existing.length > 0) {
-        console.log(`Event ${event.eventId} already processed, skipping`);
+        logger.debug({ eventId: event.eventId }, 'Event already processed, skipping');
         channel.ack(msg);
         return;
       }
       
+      const startTime = Date.now();
+
       // Process event
       if (event.eventType === EventTypes.SAMPLE_EVENT_CREATED) {
         await handleSampleEventCreated(event);
       }
-      
+
       // Mark as processed
       await db.insert(processedEvents).values({
         id: ulid(),
         eventId: event.eventId,
         consumerName: 'sample-event-consumer',
       });
-      
+
+      const duration = Date.now() - startTime;
+      metrics.incrementCounter('worker_events_processed_total', { consumer: 'sample-event-consumer', status: 'success' });
+      metrics.recordHistogram('worker_event_processing_duration_ms', duration, { consumer: 'sample-event-consumer' });
+
       channel.ack(msg);
-      console.log(`Processed event ${event.eventId}`);
+      logger.info({ eventId: event.eventId, eventType: event.eventType }, 'Processed event');
     } catch (err) {
-      console.error('Error processing event:', err);
+      metrics.incrementCounter('worker_events_processed_total', { consumer: 'sample-event-consumer', status: 'failure' });
+      logger.error({ err }, 'Error processing event');
       // Reject and requeue (will go to DLQ after TTL)
       channel.nack(msg, false, false);
     }
@@ -74,5 +83,5 @@ async function handleSampleEventCreated(event: { eventId: string; payload: { sam
     { upsert: true }
   );
   
-  console.log(`Updated MongoDB projection for sample ${event.payload.sampleId}`);
+  logger.debug({ sampleId: event.payload.sampleId }, 'Updated MongoDB projection for sample');
 }

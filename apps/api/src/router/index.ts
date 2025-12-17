@@ -1,5 +1,5 @@
 import type { AuditEvent } from '@serp/core';
-import { buildPermissionDeniedAuditEvent, buildUserActor } from '@serp/core';
+import { buildPermissionDeniedAuditEvent, buildUserActor, metrics } from '@serp/core';
 import type { Context } from '@serp/trpc';
 import { requireAuth } from '@serp/trpc';
 import { initTRPC, TRPCError } from '@trpc/server';
@@ -10,6 +10,8 @@ import { authRouter } from './auth';
 import { emergencyAccessRouter } from './emergency-access';
 import { gdprRouter } from './gdpr';
 import { healthRouter } from './health';
+import { metricsRouter } from './metrics';
+import { notificationsRouter } from './notifications';
 import { rbacRouter } from './rbac';
 import { sampleRouter } from './sample';
 import { tokensRouter } from './tokens';
@@ -20,20 +22,38 @@ const t = initTRPC.context<Context>().create();
 export const router = t.router;
 export const publicProcedure = t.procedure;
 
-// Middleware that adds audit helper to context
+// Middleware that adds audit helper to context and records metrics
 const auditMiddleware = t.procedure.use(async (opts) => {
+  const startTime = Date.now();
   const auditLog = async (auditEvent: AuditEvent) => {
     await enqueueAuditEvent(db, auditEvent);
   };
 
-  return opts.next({
-    ctx: {
-      ...opts.ctx,
-      audit: {
-        log: auditLog,
+  try {
+    const result = await opts.next({
+      ctx: {
+        ...opts.ctx,
+        audit: {
+          log: auditLog,
+        },
       },
-    },
-  });
+    });
+
+    // Record successful request metrics
+    const duration = Date.now() - startTime;
+    metrics.incrementCounter('api_requests_total', { status: 'success' });
+    metrics.recordHistogram('api_request_duration_ms', duration);
+
+    return result;
+  } catch (error) {
+    // Record failed request metrics
+    const duration = Date.now() - startTime;
+    const status = error instanceof TRPCError ? error.code : 'error';
+    metrics.incrementCounter('api_requests_total', { status });
+    metrics.recordHistogram('api_request_duration_ms', duration, { status });
+
+    throw error;
+  }
 });
 
 // Protected procedure with auth + audit + permission denied logging
@@ -87,6 +107,8 @@ export const appRouter = router({
   emergencyAccess: emergencyAccessRouter,
   gdpr: gdprRouter,
   health: healthRouter,
+  metrics: metricsRouter,
+  notifications: notificationsRouter,
   rbac: rbacRouter,
   sample: sampleRouter,
   tokens: tokensRouter,

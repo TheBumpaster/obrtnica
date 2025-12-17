@@ -1,4 +1,4 @@
-import { TokenService, hashToken } from '@serp/core';
+import { TokenService, hashToken, createChildLogger } from '@serp/core';
 import type { Context, ValidatedPrincipal } from '@serp/trpc';
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
 import { eq, and, isNull } from 'drizzle-orm';
@@ -49,11 +49,17 @@ export async function createContext({ req }: { req: Request; res: Response }): P
             db.update(apiTokens)
               .set({ lastUsedAt: new Date() })
               .where(eq(apiTokens.id, apiToken.id))
-              .catch((err) => console.error('Failed to update API token last used:', err));
+              .catch((err) => {
+                // Logger not available in context yet, use base logger
+                const logger = createChildLogger({ component: 'express-adapter' });
+                logger.error({ err }, 'Failed to update API token last used');
+              });
           }
         }
       } catch (err) {
-        console.warn('Invalid API token:', err);
+        // Logger not available in context yet, use base logger
+        const logger = createChildLogger({ component: 'express-adapter' });
+        logger.warn({ err }, 'Invalid API token');
       }
     } else {
       // Regular JWT access token
@@ -69,7 +75,9 @@ export async function createContext({ req }: { req: Request; res: Response }): P
         }
       } catch (err) {
         // Token invalid or expired - context will have no principal
-        console.warn('Invalid bearer token:', err);
+        // Logger not available in context yet, use base logger
+        const logger = createChildLogger({ component: 'express-adapter' });
+        logger.warn({ err }, 'Invalid bearer token');
       }
     }
   }
@@ -91,6 +99,15 @@ export async function createContext({ req }: { req: Request; res: Response }): P
     undefined;
   const userAgent = req.headers['user-agent'] || undefined;
 
+  // Create logger with request context
+  const logger = createChildLogger({
+    requestId,
+    correlationId,
+    userId,
+    orgId,
+    ip,
+  });
+
   return {
     principal,
     userId,
@@ -99,6 +116,7 @@ export async function createContext({ req }: { req: Request; res: Response }): P
     correlationId,
     ip,
     userAgent,
+    logger,
   };
 }
 

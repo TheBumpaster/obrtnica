@@ -35,6 +35,7 @@ import {
   requestMagicLinkSchema,
   requestOtpSchema,
   requestPasswordResetSchema,
+  requestPhoneVerificationSchema,
   resetPasswordSchema,
   revokeSessionSchema,
   stepUpSchema,
@@ -42,6 +43,7 @@ import {
   verifyMfaEnrollmentSchema,
   verifyMfaSchema,
   verifyOtpSchema,
+  verifyPhoneSchema,
 } from '@serp/validations';
 import { TRPCError } from '@trpc/server';
 import { eq, and, isNull } from 'drizzle-orm';
@@ -57,6 +59,7 @@ import {
   mfaFactors,
   mfaRecoveryCodes,
   outboxEvents,
+  phoneVerificationTokens,
   users,
 } from '../db';
 import { AuthRepository } from '../repositories/auth-repository';
@@ -1127,4 +1130,133 @@ export const authRouter = router({
       });
     }
   }),
+
+  /**
+   * Request phone verification (send SMS with code)
+   */
+  requestPhoneVerification: protectedProcedure
+    .input(requestPhoneVerificationSchema)
+    .output(z.object({ success: z.literal(true) }))
+    .mutation(async ({ input, ctx }) => {
+      const auth = requireUserAuth(ctx);
+      
+      // Rate limiting
+      await rateLimiter.checkRateLimit(`phone_verification:${auth.userId}`, 3, 15 * 60);
+
+      // Generate 6-digit code
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      const tokenId = ulid();
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+      // Store verification token
+      await db.insert(phoneVerificationTokens).values({
+        id: tokenId,
+        userId: auth.userId,
+        phoneNumber: input.phoneNumber,
+        code,
+        expiresAt,
+      });
+
+      // Emit event for SMS delivery (non-enumerable)
+      // Note: OTP event expects email, but we're using it for phone verification
+      // The consumer will handle phone numbers via the OTP event
+      const otpEvent = createOtpRequested(
+        auth.orgId,
+        {
+          userId: auth.userId,
+          email: input.phoneNumber, // Reusing email field for phone number
+          code,
+          purpose: 'VERIFICATION',
+        },
+        ctx.correlationId
+      );
+
+      const outboxRecord: InferInsertModel<typeof outboxEvents> = {
+        id: ulid(),
+        eventId: otpEvent.eventId,
+        eventType: otpEvent.eventType,
+        eventVersion: otpEvent.eventVersion,
+        tenantId: otpEvent.tenantId ?? 'system',
+        correlationId: otpEvent.correlationId,
+        payload: otpEvent.payload as unknown as Record<string, unknown>,
+        occurredAt: otpEvent.occurredAt,
+      };
+      await db.insert(outboxEvents).values(outboxRecord);
+
+      // Always return success (non-enumerable)
+      return { success: true };
+    }),
+
+  /**
+   * Verify phone number with code
+   */
+  verifyPhone: protectedProcedure
+    .input(verifyPhoneSchema)
+    .output(z.object({ success: z.literal(true) }))
+    .mutation(async ({ input, ctx }) => {
+      const auth = requireUserAuth(ctx);
+
+      // Find verification token
+      const tokens = await db
+        .select()
+        .from(phoneVerificationTokens)
+        .where(
+          and(
+            eq(phoneVerificationTokens.userId, auth.userId),
+            eq(phoneVerificationTokens.code, input.code),
+            isNull(phoneVerificationTokens.verifiedAt)
+          )
+        )
+        .limit(1);
+
+      if (tokens.length === 0) {
+        throw new TRPCError({
+          code: 'UNAUTHORIZED',
+          message: 'Invalid or expired code',
+        });
+      }
+
+      const token = tokens[0];
+
+      // Check expiration
+      if (token.expiresAt < new Date()) {
+        throw new TRPCError({
+          code: 'UNAUTHORIZED',
+          message: 'Invalid or expired code',
+        });
+      }
+
+      // Mark as verified
+      await db
+        .update(phoneVerificationTokens)
+        .set({ verifiedAt: new Date() })
+        .where(eq(phoneVerificationTokens.id, token.id));
+
+      // Update user phone_verified_at
+      await db
+        .update(users)
+        .set({ phoneVerifiedAt: new Date() })
+        .where(eq(users.id, auth.userId));
+
+      // Audit event
+      const auditEvent = buildAuditEvent({
+        eventType: AuditEventTypes.AUTH_PHONE_VERIFIED,
+        tenantId: auth.orgId,
+        actor: buildUserActor(auth.userId),
+        ip: ctx.ip,
+        userAgent: ctx.userAgent,
+        requestId: ctx.requestId,
+        correlationId: ctx.correlationId,
+        action: 'PHONE_VERIFICATION',
+        status: 'SUCCESS',
+        dataTag: {
+          classification: DataClassifications.RESTRICTED,
+          categories: [DataCategories.AUTH],
+        },
+      });
+
+      await enqueueAuditEvent(db, auditEvent);
+
+      return { success: true };
+    }),
 });

@@ -1,9 +1,10 @@
-import type { DomainEvent } from '@serp/core';
+import { createChildLogger, type DomainEvent } from '@serp/core';
 
 import { MailjetAdapter } from '../adapters/mailjet';
 import { config } from '../config';
 
 const mailjet = new MailjetAdapter(config.NOTIFICATIONS_DRY_RUN === 'true');
+const logger = createChildLogger({ component: 'auth-otp-consumer' });
 
 interface OtpPayload {
   userId: string;
@@ -18,7 +19,7 @@ interface OtpPayload {
 export async function consumeAuthOtpEvent(event: DomainEvent): Promise<void> {
   try {
     if (event.eventType !== 'auth.otp.requested') {
-      console.warn(`Unknown OTP event type: ${event.eventType}`);
+      logger.warn({ eventType: event.eventType }, 'Unknown OTP event type');
       return;
     }
 
@@ -64,7 +65,7 @@ export async function consumeAuthOtpEvent(event: DomainEvent): Promise<void> {
       `,
     });
 
-    console.log(`Sent OTP code to ${payload.email} for user ${payload.userId} (purpose: ${payload.purpose})`);
+    logger.info({ userId: payload.userId, email: payload.email, purpose: payload.purpose }, 'Sent OTP code');
 
     // TODO: If user has a phone number on file, also send via SMS
     // const user = await db.select().from(users).where(eq(users.id, payload.userId)).limit(1);
@@ -75,7 +76,7 @@ export async function consumeAuthOtpEvent(event: DomainEvent): Promise<void> {
     //   });
     // }
   } catch (error) {
-    console.error(`Error processing OTP event:`, error);
+    logger.error({ err: error }, 'Error processing OTP event');
     throw error;
   }
 }

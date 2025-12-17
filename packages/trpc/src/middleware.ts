@@ -3,7 +3,7 @@ import type {
   UserPermissions,
   AuthorizationContext,
 } from '@serp/core';
-import { requirePermission as coreRequirePermission, AuthorizationError } from '@serp/core';
+import { requirePermission as coreRequirePermission, AuthorizationError, metrics } from '@serp/core';
 import { TRPCError } from '@trpc/server';
 
 import type { Context } from './context';
@@ -164,12 +164,18 @@ export async function requirePermission(
   // Check permission using core authorization engine
   try {
     coreRequirePermission(authContext, permission, userPermissions);
+    // Record successful permission check
+    metrics.incrementCounter('permission_check_total', { permission, status: 'success' });
   } catch (error) {
     if (error instanceof AuthorizationError) {
+      // Record failed permission check
+      metrics.incrementCounter('permission_check_total', { permission, status: 'failure', reason: error.code || 'unknown' });
+      
       // Audit authorization failure
       if (auditFailureCallback) {
         await auditFailureCallback(ctx, auth, permission, error.message).catch((auditError) => {
-          console.error('Failed to audit permission failure:', auditError);
+          const logger = ctx.logger || { error: () => {} };
+          logger.error({ err: auditError }, 'Failed to audit permission failure');
         });
       }
 

@@ -122,3 +122,12 @@ export const stepUpSchema = z.object({
 export const disableMfaSchema = z.object({
   code: z.string().length(6), // Require MFA code to disable
 });
+
+// Phone verification
+export const requestPhoneVerificationSchema = z.object({
+  phoneNumber: z.string().regex(/^\+[1-9]\d{1,14}$/, 'Phone number must be in E.164 format (e.g., +1234567890)'),
+});
+
+export const verifyPhoneSchema = z.object({
+  code: z.string().length(6),
+});

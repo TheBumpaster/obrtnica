@@ -6,6 +6,8 @@ export * from './auth/mfa-service';
 export * from './auth/permissions';
 export * from './auth/token-service';
 export * from './events';
+export * from './logger';
+export * from './metrics/metrics';
 export * from './services';
 export * from './storage';
 export * from './types';

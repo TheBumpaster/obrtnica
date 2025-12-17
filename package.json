@@ -31,7 +31,8 @@
     "api:bundle": "tsx scripts/ci/bundle-node-service.ts api",
     "worker:dev": "turbo run dev --filter=@serp/worker",
     "worker:build": "turbo run build --filter=@serp/worker",
-    "worker:bundle": "tsx scripts/ci/bundle-node-service.ts worker"
+    "worker:bundle": "tsx scripts/ci/bundle-node-service.ts worker",
+    "clean": "pnpm dlx rimraf -g **/node_modules"
   },
   "devDependencies": {
     "turbo": "^2.3.3",

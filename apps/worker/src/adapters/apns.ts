@@ -1,8 +1,11 @@
 import fs from 'fs';
 
+import { createChildLogger } from '@serp/core';
 import { Notification, Provider } from 'apn';
 
 import { config } from '../config';
+
+const logger = createChildLogger({ component: 'apns-adapter' });
 
 export interface ApnsPayload {
   token: string;
@@ -33,17 +36,14 @@ export class ApnsAdapter {
           production: config.APNS_PRODUCTION === 'true',
         });
       } catch (err) {
-        console.warn('Failed to initialize APNs provider:', err);
+        logger.warn({ err }, 'Failed to initialize APNs provider');
       }
     }
   }
 
   async sendPush(payload: ApnsPayload): Promise<{ success: boolean; invalidToken?: boolean }> {
     if (this.dryRun || !this.provider) {
-      console.log('[DRY RUN] Would send APNs push:', {
-        token: payload.token.substring(0, 20) + '...',
-        title: payload.title,
-      });
+      logger.debug({ tokenPrefix: payload.token.substring(0, 20), title: payload.title }, '[DRY RUN] Would send APNs push');
       return { success: true };
     }
 
@@ -61,16 +61,16 @@ export class ApnsAdapter {
       if (result.failed.length > 0) {
         const failure = result.failed[0];
         if (failure.status === '410' || failure.response?.reason === 'BadDeviceToken') {
-          console.log(`Invalid APNs token: ${payload.token}`);
+          logger.warn({ tokenPrefix: payload.token.substring(0, 20) }, 'Invalid APNs token');
           return { success: false, invalidToken: true };
         }
         throw new Error(`APNs send failed: ${failure.response?.reason || 'unknown'}`);
       }
       
-      console.log(`Sent APNs push to token ${payload.token.substring(0, 20)}...`);
+      logger.debug({ tokenPrefix: payload.token.substring(0, 20) }, 'Sent APNs push');
       return { success: true };
     } catch (err) {
-      console.error('APNs send error:', err);
+      logger.error({ err }, 'APNs send error');
       throw err;
     }
   }

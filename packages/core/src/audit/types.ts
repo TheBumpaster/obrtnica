@@ -11,6 +11,7 @@ export const AuditEventTypes = {
   AUTH_MFA_RESET: 'auth.mfa.reset',
   AUTH_PASSWORD_RESET: 'auth.password.reset',
   AUTH_PASSWORD_CHANGED: 'auth.password.changed',
+  AUTH_PHONE_VERIFIED: 'auth.phone.verified',
   AUTH_DEVICE_REGISTERED: 'auth.device.registered',
   AUTH_DEVICE_REMOVED: 'auth.device.removed',
 

@@ -1,4 +1,4 @@
-import { jsonb, pgTable, text, timestamp, varchar } from 'drizzle-orm/pg-core';
+import { integer, jsonb, pgTable, text, timestamp, varchar } from 'drizzle-orm/pg-core';
 
 import { serviceAccounts } from './service-accounts';
 import { orgs } from '../tenant/orgs';
@@ -22,6 +22,7 @@ export const apiTokens = pgTable(
     expiresAt: timestamp('expires_at'),
     revokedAt: timestamp('revoked_at'),
     lastUsedAt: timestamp('last_used_at'),
+    version: integer('version').default(0).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (table) => ({

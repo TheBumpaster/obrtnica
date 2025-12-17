@@ -1,11 +1,14 @@
+import { createChildLogger } from '@serp/core';
 import { eq, isNull } from 'drizzle-orm';
 
 import { db, outboxEvents } from '../db';
 import { getChannel } from '../queue/connection';
 import { publishEvent } from '../queue/publisher';
 
+const logger = createChildLogger({ component: 'outbox-dispatcher' });
+
 export async function runOutboxDispatcher(): Promise<void> {
-  console.log('Starting outbox dispatcher...');
+  logger.info('Starting outbox dispatcher...');
   
   const pollInterval = 5000; // 5 seconds
   
@@ -41,10 +44,10 @@ export async function runOutboxDispatcher(): Promise<void> {
       }
       
       if (events.length > 0) {
-        console.log(`Dispatched ${events.length} events from outbox`);
+        logger.debug({ count: events.length }, 'Dispatched events from outbox');
       }
     } catch (err) {
-      console.error('Outbox dispatcher error:', err);
+      logger.error({ err }, 'Outbox dispatcher error');
     }
   };
   
