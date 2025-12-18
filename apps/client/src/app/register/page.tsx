@@ -1,8 +1,9 @@
 "use client";
 
-import { registerOrgAndUser, requestEmailVerification } from "@serp/auth-flow";
 import { useRouter } from "next/navigation";
 import { FormEvent, Suspense, useState } from "react";
+
+import { registerOrgAndUser, requestEmailVerification } from "@/lib/auth";
 
 import { createTrpcClient } from "../../lib/trpc";
 

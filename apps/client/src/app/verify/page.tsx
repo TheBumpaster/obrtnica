@@ -1,7 +1,8 @@
 "use client";
 
-import { requestEmailVerification, requestPhoneVerification, verifyEmail, verifyPhone } from "@serp/auth-flow";
 import { Suspense, useState } from "react";
+
+import { requestEmailVerification, requestPhoneVerification, verifyEmail, verifyPhone } from "@/lib/auth";
 
 import { createTrpcClient } from "../../lib/trpc";
 

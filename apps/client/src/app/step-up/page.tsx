@@ -1,7 +1,8 @@
 "use client";
 
-import { stepUpAuth } from "@serp/auth-flow";
 import { Suspense, useState } from "react";
+
+import { stepUpAuth } from "@/lib/auth";
 
 import { useAuth } from "../../context/auth-context";
 

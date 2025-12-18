@@ -1,7 +1,8 @@
 "use client";
 
-import { requestPasswordReset } from "@serp/auth-flow";
 import { Suspense, useState } from "react";
+
+import { requestPasswordReset } from "@/lib/auth";
 
 import { createTrpcClient } from "../../lib/trpc";
 

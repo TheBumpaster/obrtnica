@@ -1,8 +1,9 @@
 "use client";
 
-import { resetPassword } from "@serp/auth-flow";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useMemo, useState } from "react";
+
+import { resetPassword } from "@/lib/auth";
 
 import { createTrpcClient } from "../../lib/trpc";
 

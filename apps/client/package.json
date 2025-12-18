@@ -13,7 +13,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@serp/shell-core": "workspace:*",
     "@serp/trpc": "workspace:*",
     "@serp/validations": "workspace:*",
     "@serp/api": "workspace:*",

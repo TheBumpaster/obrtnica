@@ -27,6 +27,10 @@ December 17, 2025
 - `packages/trpc/` - tRPC contracts, middleware, client factory
 - `packages/core/` - Domain events, services, business logic types
 
+### Client-local UI libraries
+- `apps/client/src/lib/auth` - Auth wrappers and error mapping using shared validations
+- `apps/client/src/lib/shell` - Navigation catalog and permission helpers for client UI
+
 ### Apps
 - `apps/api/` - Express + tRPC API server with Drizzle ORM
 - `apps/worker/` - RabbitMQ consumers + outbox dispatcher

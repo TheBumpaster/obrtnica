@@ -1,13 +1,14 @@
 "use client";
 
+import { Suspense, useState } from "react";
+
 import {
   disableMfa,
   enrollMfa,
   generateRecoveryCodes,
   verifyMfa,
   verifyMfaEnrollment,
-} from "@serp/auth-flow";
-import { Suspense, useState } from "react";
+} from "@/lib/auth";
 
 import { createTrpcClient } from "../../lib/trpc";
 

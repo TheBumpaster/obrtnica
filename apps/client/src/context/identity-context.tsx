@@ -1,8 +1,9 @@
 "use client";
 
 import type { PermissionId } from '@serp/core';
-import { filterNavByPermissions, moduleCatalog, type NavigationNode } from '@serp/shell-core';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+
+import { filterNavByPermissions, moduleCatalog, type NavigationNode } from '@/lib/shell';
 
 import { useAuth } from './auth-context';
 import { usePermissions } from './permission-context';

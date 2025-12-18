@@ -1,6 +1,6 @@
 "use client";
 
-import { canWrite } from '@serp/shell-core';
+import { canWrite } from '@/lib/shell';
 
 import { ModuleLayout } from '../../../components/module-layout';
 import { PermissionGate } from '../../../components/permission-gate';

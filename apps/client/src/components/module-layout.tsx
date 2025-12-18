@@ -1,6 +1,6 @@
 "use client";
 
-import { canWrite } from '@serp/shell-core';
+import { canWrite } from '@/lib/shell';
 
 import { usePermissions } from '../context/permission-context';
 

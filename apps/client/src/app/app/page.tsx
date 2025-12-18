@@ -1,7 +1,8 @@
 "use client";
 
-import { moduleCatalog } from '@serp/shell-core';
 import Link from 'next/link';
+
+import { moduleCatalog } from '@/lib/shell';
 
 
 export default function AppHome() {

@@ -1,7 +1,8 @@
 "use client";
 
-import { isUnauthorizedError, mapTrpcErrorToAuthError } from '@serp/auth-flow';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+
+import { isUnauthorizedError, mapTrpcErrorToAuthError } from '@/lib/auth';
 
 import { clearTokens, loadTokens, saveTokens, type StoredTokens } from '../lib/auth-storage';
 import { createTrpcClient, type ApiClient } from '../lib/trpc';

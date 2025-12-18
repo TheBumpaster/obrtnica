@@ -1,5 +1,5 @@
-import type { NavigationNode, PermissionSet, Platform } from './types';
 import { hasAny } from './helpers';
+import type { NavigationNode, PermissionSet, Platform } from './types';
 
 type FilterOptions = {
   platform?: Platform;

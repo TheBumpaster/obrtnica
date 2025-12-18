@@ -21,149 +21,117 @@ import {
   verifyOtpSchema,
   verifyPhoneSchema,
 } from './schemas';
-
-// Lightweight API wrappers around existing tRPC procedures.
-
-type AnyClient = {
-  auth: Record<string, any>;
-};
+import type { ApiClient } from '../trpc';
 
 export async function loginWithPassword(
-  client: AnyClient,
+  client: ApiClient,
   email: string,
   password: string
-): Promise<Awaited<ReturnType<AnyClient['auth']['login']['mutate']>>> {
+): Promise<Awaited<ReturnType<ApiClient['auth']['login']['mutate']>>> {
   return client.auth.login.mutate(loginSchema.parse({ email, password }));
 }
 
 export async function registerOrgAndUser(
-  client: AnyClient,
+  client: ApiClient,
   payload: z.infer<typeof registerSchema>
-): Promise<Awaited<ReturnType<AnyClient['auth']['register']['mutate']>>> {
+): Promise<Awaited<ReturnType<ApiClient['auth']['register']['mutate']>>> {
   return client.auth.register.mutate(registerSchema.parse(payload));
 }
 
 export async function refreshAccessToken(
-  client: AnyClient,
+  client: ApiClient,
   refreshToken: string
-): Promise<Awaited<ReturnType<AnyClient['auth']['refresh']['mutate']>>> {
+): Promise<Awaited<ReturnType<ApiClient['auth']['refresh']['mutate']>>> {
   return client.auth.refresh.mutate({ refreshToken });
 }
 
-export async function logout(client: AnyClient): Promise<any> {
+export async function logout(client: ApiClient) {
   return client.auth.logout.mutate();
 }
 
-export async function requestOtp(
-  client: AnyClient,
-  payload: z.infer<typeof requestOtpSchema>
-): Promise<any> {
+export async function requestOtp(client: ApiClient, payload: z.infer<typeof requestOtpSchema>) {
   return client.auth.requestOtp.mutate(requestOtpSchema.parse(payload));
 }
 
-export async function verifyOtp(
-  client: AnyClient,
-  payload: z.infer<typeof verifyOtpSchema>
-): Promise<any> {
+export async function verifyOtp(client: ApiClient, payload: z.infer<typeof verifyOtpSchema>) {
   return client.auth.verifyOtp.mutate(verifyOtpSchema.parse(payload));
 }
 
 export async function requestMagicLink(
-  client: AnyClient,
+  client: ApiClient,
   payload: z.infer<typeof requestMagicLinkSchema>
-): Promise<any> {
+): Promise<Awaited<ReturnType<ApiClient['auth']['requestMagicLink']['mutate']>>> {
   return client.auth.requestMagicLink.mutate(requestMagicLinkSchema.parse(payload));
 }
 
 export async function consumeMagicLink(
-  client: AnyClient,
+  client: ApiClient,
   payload: z.infer<typeof consumeMagicLinkSchema>
-): Promise<any> {
+): Promise<Awaited<ReturnType<ApiClient['auth']['consumeMagicLink']['mutate']>>> {
   return client.auth.consumeMagicLink.mutate(consumeMagicLinkSchema.parse(payload));
 }
 
-export async function requestEmailVerification(client: AnyClient): Promise<any> {
+export async function requestEmailVerification(client: ApiClient) {
   return client.auth.requestEmailVerification.mutate(requestEmailVerificationSchema.parse({}));
 }
 
-export async function verifyEmail(
-  client: AnyClient,
-  payload: z.infer<typeof verifyEmailSchema>
-): Promise<any> {
+export async function verifyEmail(client: ApiClient, payload: z.infer<typeof verifyEmailSchema>) {
   return client.auth.verifyEmail.mutate(verifyEmailSchema.parse(payload));
 }
 
 export async function requestPhoneVerification(
-  client: AnyClient,
+  client: ApiClient,
   payload: z.infer<typeof requestPhoneVerificationSchema>
-): Promise<any> {
+): Promise<Awaited<ReturnType<ApiClient['auth']['requestPhoneVerification']['mutate']>>> {
   return client.auth.requestPhoneVerification.mutate(requestPhoneVerificationSchema.parse(payload));
 }
 
-export async function verifyPhone(
-  client: AnyClient,
-  payload: z.infer<typeof verifyPhoneSchema>
-): Promise<any> {
+export async function verifyPhone(client: ApiClient, payload: z.infer<typeof verifyPhoneSchema>) {
   return client.auth.verifyPhone.mutate(verifyPhoneSchema.parse(payload));
 }
 
 export async function requestPasswordReset(
-  client: AnyClient,
+  client: ApiClient,
   payload: z.infer<typeof requestPasswordResetSchema>
-): Promise<any> {
+): Promise<Awaited<ReturnType<ApiClient['auth']['requestPasswordReset']['mutate']>>> {
   return client.auth.requestPasswordReset.mutate(requestPasswordResetSchema.parse(payload));
 }
 
-export async function resetPassword(
-  client: AnyClient,
-  payload: z.infer<typeof resetPasswordSchema>
-): Promise<any> {
+export async function resetPassword(client: ApiClient, payload: z.infer<typeof resetPasswordSchema>) {
   return client.auth.resetPassword.mutate(resetPasswordSchema.parse(payload));
 }
 
-export async function enrollMfa(client: AnyClient): Promise<any> {
+export async function enrollMfa(client: ApiClient) {
   return client.auth.enrollMfa.mutate(enrollMfaSchema.parse({}));
 }
 
 export async function verifyMfaEnrollment(
-  client: AnyClient,
+  client: ApiClient,
   payload: z.infer<typeof verifyMfaEnrollmentSchema>
-): Promise<any> {
+): Promise<Awaited<ReturnType<ApiClient['auth']['verifyMfaEnrollment']['mutate']>>> {
   return client.auth.verifyMfaEnrollment.mutate(verifyMfaEnrollmentSchema.parse(payload));
 }
 
-export async function generateRecoveryCodes(client: AnyClient): Promise<any> {
+export async function generateRecoveryCodes(client: ApiClient) {
   return client.auth.generateRecoveryCodes.mutate(generateRecoveryCodesSchema.parse({}));
 }
 
-export async function verifyMfa(
-  client: AnyClient,
-  payload: z.infer<typeof verifyMfaSchema>
-): Promise<any> {
+export async function verifyMfa(client: ApiClient, payload: z.infer<typeof verifyMfaSchema>) {
   return client.auth.verifyMfa.mutate(verifyMfaSchema.parse(payload));
 }
 
-export async function disableMfa(
-  client: AnyClient,
-  payload: z.infer<typeof disableMfaSchema>
-): Promise<any> {
+export async function disableMfa(client: ApiClient, payload: z.infer<typeof disableMfaSchema>) {
   return client.auth.disableMfa.mutate(disableMfaSchema.parse(payload));
 }
 
-export async function stepUpAuth(
-  client: AnyClient,
-  payload: z.infer<typeof stepUpSchema>
-): Promise<any> {
+export async function stepUpAuth(client: ApiClient, payload: z.infer<typeof stepUpSchema>) {
   return client.auth.stepUp.mutate(stepUpSchema.parse(payload));
 }
 
-export async function listSessions(client: AnyClient): Promise<any> {
-  return client.auth.listSessions.query({});
+export async function listSessions(client: ApiClient) {
+  return client.auth.listSessions.query();
 }
 
-export async function revokeSession(
-  client: AnyClient,
-  payload: z.infer<typeof revokeSessionSchema>
-): Promise<any> {
+export async function revokeSession(client: ApiClient, payload: z.infer<typeof revokeSessionSchema>) {
   return client.auth.revokeSession.mutate(revokeSessionSchema.parse(payload));
 }

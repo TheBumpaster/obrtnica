@@ -1,5 +1,5 @@
-import type { inferFlattenedErrors } from 'zod';
 import { TRPCClientError } from '@trpc/client';
+import type { ZodTypeAny, inferFlattenedErrors } from 'zod';
 
 export type AuthErrorCode =
   | 'invalid_credentials'
@@ -19,7 +19,13 @@ export type AuthError = {
   retryAfterSeconds?: number;
 };
 
-function extractFieldErrors(zodError: inferFlattenedErrors<any> | undefined) {
+type TrpcErrorData = {
+  zodError?: inferFlattenedErrors<ZodTypeAny>;
+  code?: string;
+  retryAfterSeconds?: number;
+};
+
+function extractFieldErrors(zodError: inferFlattenedErrors<ZodTypeAny> | undefined) {
   if (!zodError?.fieldErrors) return undefined;
   const result: Record<string, string> = {};
   for (const [field, messages] of Object.entries(zodError.fieldErrors)) {
@@ -40,13 +46,13 @@ export function mapTrpcErrorToAuthError(err: unknown): AuthError {
     return fallback;
   }
 
-  const trpcCode = (err.data as any)?.code;
+  const data = (err.data ?? {}) as TrpcErrorData;
+  const trpcCode = data.code;
   const message = err.message || fallback.message;
   const lowerMessage = message.toLowerCase();
-  const fieldErrors = extractFieldErrors((err.data as any)?.zodError);
-  const retryAfterSeconds = (err.data as any)?.retryAfterSeconds;
+  const fieldErrors = extractFieldErrors(data.zodError);
+  const retryAfterSeconds = data.retryAfterSeconds;
 
-  // Heuristic mapping
   if (lowerMessage.includes('mfa') && lowerMessage.includes('required')) {
     return { code: 'mfa_required', message, fieldErrors, retryAfterSeconds };
   }
@@ -91,9 +97,6 @@ export function mapTrpcErrorToAuthError(err: unknown): AuthError {
   return { ...fallback, fieldErrors, retryAfterSeconds };
 }
 
-/**
- * Utility to detect unauthorized errors for refresh-on-401 guards.
- */
 export function isUnauthorizedError(err: unknown): boolean {
   if (!(err instanceof TRPCClientError)) return false;
   const code = (err.data as Record<string, unknown> | undefined)?.code;

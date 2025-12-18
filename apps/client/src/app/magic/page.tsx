@@ -1,8 +1,9 @@
 "use client";
 
-import { consumeMagicLink } from "@serp/auth-flow";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
+
+import { consumeMagicLink } from "@/lib/auth";
 
 import { createTrpcClient } from "../../lib/trpc";
 

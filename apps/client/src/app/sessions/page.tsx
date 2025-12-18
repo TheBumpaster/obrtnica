@@ -1,7 +1,8 @@
 "use client";
 
-import { listSessions, revokeSession } from "@serp/auth-flow";
 import { Suspense, useCallback, useEffect, useState } from "react";
+
+import { listSessions, revokeSession } from "@/lib/auth";
 
 import { useAuth } from "../../context/auth-context";
 
