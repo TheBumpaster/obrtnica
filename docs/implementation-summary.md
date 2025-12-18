@@ -31,8 +31,9 @@ December 17, 2025
 - `apps/api/` - Express + tRPC API server with Drizzle ORM
 - `apps/worker/` - RabbitMQ consumers + outbox dispatcher
 - `apps/web/` - Next.js App Router web client
-- `apps/mobile/` - Expo mobile client
 - `apps/desktop/` - Electron + Vite desktop client
+
+> **Note:** The mobile app (`apps/mobile`) was removed from this monorepo. A reference archive is available in [`docs/archive/mobile/`](archive/mobile/).
 
 ### Database
 - `apps/api/src/db/schema.ts` - Drizzle schema (orgs, users, notifications, outbox, etc.)

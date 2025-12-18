@@ -69,7 +69,6 @@ Cursor must not suggest manual SQL execution unless explicitly required and docu
 When instructing how to run or test an app locally, Cursor must reference project scripts such as:
 
 - `pnpm web:dev`, `pnpm web:build`
-- `pnpm mobile:dev`, `pnpm mobile:build`
 - `pnpm desktop:dev`, `pnpm desktop:build`
 - `pnpm api:dev`, `pnpm api:build`
 - `pnpm worker:dev`, `pnpm worker:build`

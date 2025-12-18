@@ -1,8 +1,21 @@
+"use client";
+
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+
+import { useAuth } from '../context/auth-context';
+
 export default function Home() {
-  return (
-    <main>
-      <h1>Serp Web</h1>
-      <p>Welcome to the Serp web application</p>
-    </main>
-  );
+  const { tokens } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (tokens?.accessToken) {
+      router.replace('/app');
+    } else {
+      router.replace('/login');
+    }
+  }, [tokens, router]);
+
+  return null;
 }

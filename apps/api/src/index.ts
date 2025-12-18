@@ -12,6 +12,8 @@ import { db } from './db';
 import { appRouter } from './router';
 import { PermissionLoader } from './services/permission-loader';
 
+export type { AppRouter } from './router';
+
 // Initialize permission system
 const permissionLoader = new PermissionLoader(db);
 setPermissionLoader(async (actorType, actorId, orgId, workspaceId) => {

@@ -15,9 +15,6 @@ This rule applies to:
 - `apps/web` (Next.js)
 - `apps/desktop` (Electron renderer – React DOM)
 
-This rule does NOT apply to:
-- `apps/mobile` (React Native – separate UI system)
-
 ---
 
 ## 2) UI Technology Baseline

@@ -40,17 +40,17 @@ This report provides a comprehensive review of the project implementation agains
 
 **Requirement**: 
 - `apps/web` — Next.js (React) web client
-- `apps/mobile` — React Native (Expo) mobile client
 - `apps/desktop` — Electron desktop client
 - `apps/api` — tRPC API server with runtime adapters
 - `apps/worker` — background jobs + messaging consumers
 
 **Implementation Status**:
 - ✅ `apps/web/` - Next.js app with TypeScript, Tailwind
-- ✅ `apps/mobile/` - Expo React Native app structure
 - ✅ `apps/desktop/` - Electron app with Vite
 - ✅ `apps/api/` - tRPC server with Express adapter
 - ✅ `apps/worker/` - Worker with RabbitMQ consumers
+
+> **Note:** The mobile app (`apps/mobile`) was removed from this monorepo. A reference archive is available in [`docs/archive/mobile/`](../archive/mobile/).
 
 **Findings**: ✅ **Fully Compliant**
 

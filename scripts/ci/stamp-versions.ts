@@ -1,7 +1,6 @@
 #!/usr/bin/env tsx
 /**
  * CI helper: Stamp version metadata into apps before building
- * Updates app.json, package.json where needed
  * Creates build-metadata.json for each artifact
  */
 
@@ -32,16 +31,7 @@ const buildMetadata = {
 
 console.log('Stamping versions:', buildMetadata);
 
-// 1) Update mobile app.json
-const mobileAppJsonPath = path.join(process.cwd(), 'apps/mobile/app.json');
-if (fs.existsSync(mobileAppJsonPath)) {
-  const appJson = JSON.parse(fs.readFileSync(mobileAppJsonPath, 'utf-8'));
-  appJson.expo.version = versionCore;
-  fs.writeFileSync(mobileAppJsonPath, JSON.stringify(appJson, null, 2) + '\n');
-  console.log(`✓ Updated ${mobileAppJsonPath} to version ${versionCore}`);
-}
-
-// 2) Write build metadata to scripts/ci/build-metadata.json (will be copied into artifacts)
+// Write build metadata to scripts/ci/build-metadata.json (will be copied into artifacts)
 const metadataOutputPath = path.join(process.cwd(), 'scripts/ci/build-metadata.json');
 fs.writeFileSync(metadataOutputPath, JSON.stringify(buildMetadata, null, 2) + '\n');
 console.log(`✓ Created ${metadataOutputPath}`);

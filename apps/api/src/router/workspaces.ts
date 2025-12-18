@@ -77,7 +77,7 @@ export const workspacesRouter = router({
    * Add member to workspace
    */
   addMember: protectedProcedure.input(addWorkspaceMemberSchema).mutation(async ({ input, ctx }) => {
-    const _auth = requireUserAuth(ctx);
+    requireUserAuth(ctx);
 
     // Check permission - requires workspace.members.assign
     await requirePermission(ctx, 'workspace.members.assign', input.workspaceId);

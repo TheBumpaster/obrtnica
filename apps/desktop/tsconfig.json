@@ -18,7 +18,9 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@serp/*": ["../../packages/*/src"],
+      "@serp/api/*": ["../api/src/*"]
     }
   },
   "include": ["src", "electron"],

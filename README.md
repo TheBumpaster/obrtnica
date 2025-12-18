@@ -6,9 +6,11 @@ Multi-platform application with event-driven architecture, built with TypeScript
 
 This is a **TurboRepo monorepo** containing:
 
-- **3 client apps**: web (Next.js), mobile (Expo), desktop (Electron)
+- **2 client apps**: web (Next.js), desktop (Electron)
 - **2 server apps**: API (Express + tRPC), worker (background jobs)
 - **4 shared packages**: core (business logic), validations (Zod schemas), trpc (contracts), config (tooling)
+
+> **Note:** The mobile app (Expo) was removed from this monorepo due to peer dependency conflicts. A reference archive is available in [`docs/archive/mobile/`](docs/archive/mobile/).
 
 ### Tech Stack
 
@@ -18,7 +20,7 @@ This is a **TurboRepo monorepo** containing:
 - **Analytics**: MongoDB - derived projections
 - **Queue**: RabbitMQ - event-driven async processing
 - **Notifications**: Mailjet (email), Twilio (SMS), FCM/APNs (push)
-- **Clients**: Next.js App Router, Expo, Electron + Vite
+- **Clients**: Next.js App Router, Electron + Vite
 
 ### Data Flow
 
@@ -97,7 +99,6 @@ API runs on http://localhost:3001
 .
 ├── apps/
 │   ├── web/          Next.js App Router (web client)
-│   ├── mobile/       Expo (mobile client)
 │   ├── desktop/      Electron + Vite (desktop client)
 │   ├── api/          Express + tRPC (API server)
 │   └── worker/       Background jobs + event consumers
@@ -188,9 +189,9 @@ See [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
 ### Release Builds
 
 Tag-driven release pipeline builds artifacts for all platforms:
-- **Development** (`vX.Y.Z-dev`): Web, Mobile(Android), Desktop(Linux/Windows), API, Worker
-- **Staging** (`vX.Y.Z-stage`): All platforms including iOS and macOS
-- **Production** (`vX.Y.Z`): All platforms including iOS and macOS
+- **Development** (`vX.Y.Z-dev`): Web, Desktop(Linux/Windows), API, Worker
+- **Staging** (`vX.Y.Z-stage`): All platforms including macOS
+- **Production** (`vX.Y.Z`): All platforms including macOS
 
 Artifacts are attached to GitHub Releases with auto-generated release notes.
 

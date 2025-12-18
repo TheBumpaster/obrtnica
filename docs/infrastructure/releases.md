@@ -184,8 +184,7 @@ This is useful for:
 
 The CI pipeline automatically stamps versions into artifacts:
 
-1. **Mobile**: Updates `apps/mobile/app.json` → `expo.version`
-2. **All artifacts**: Includes `build-metadata.json` with:
+1. **All artifacts**: Includes `build-metadata.json` with:
    ```json
    {
      "tag": "v1.0.0",
@@ -215,11 +214,6 @@ The web artifact is a Next.js standalone build. Deploy by:
 1. Extracting the zip
 2. Setting environment variables
 3. Running `start.sh` or `node apps/web/server.js`
-
-### Mobile Distribution
-- **Android APK**: Direct install or internal distribution
-- **Android AAB**: Submit to Google Play Store
-- **iOS IPA**: Submit to App Store or TestFlight
 
 ### Desktop Distribution
 - Artifacts are unsigned by default (for internal use)

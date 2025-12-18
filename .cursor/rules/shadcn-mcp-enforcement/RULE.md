@@ -8,9 +8,6 @@ Applies to:
 - apps/web
 - apps/desktop (Electron renderer)
 
-Does not apply to:
-- apps/mobile (React Native)
-
 ---
 
 ## 1) Mandatory MCP-First Workflow

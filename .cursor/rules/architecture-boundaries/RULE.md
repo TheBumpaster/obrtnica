@@ -31,9 +31,6 @@ This repository enforces strict architectural boundaries to maintain quality and
   - UI only
   - must not contain business rules beyond presentation and UX
 
-- `apps/mobile`:
-  - React Native UI only (separate UI patterns allowed)
-
 ---
 
 ## 2) Forbidden Dependencies

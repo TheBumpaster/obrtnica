@@ -50,22 +50,13 @@ A comprehensive GitHub Actions workflow that:
 - Supports x64 and arm64 architectures
 - Matrix builds across Windows/Linux (all channels) and macOS (stage/prod only)
 
-### 5. Mobile Build System (Expo + Fastlane)
+### 5. Mobile Build System (Expo + Fastlane) [REMOVED]
 
-**Added:** `apps/mobile/fastlane/`
+> **Note:** The mobile app was removed from this monorepo in January 2025 due to peer dependency conflicts. A reference archive including Fastlane configuration is available in [`docs/archive/mobile/`](../../archive/mobile/).
 
-- `Gemfile`: Ruby dependencies (Fastlane, CocoaPods)
-- `Appfile`: iOS/Android app configuration
-- `Fastfile`: Build lanes for Android (APK/AAB) and iOS (IPA)
-
-**Added:** `apps/mobile/.gitignore`
-
-- Excludes generated `android/` and `ios/` folders (created by expo prebuild in CI)
-
-**Workflow Integration:**
-- Uses `expo prebuild` to generate native projects
-- Fastlane builds signed Android APK/AAB and iOS IPA
-- Android: all channels; iOS: stage/prod only
+**Historical Context:**
+- Previously used Expo + Fastlane for Android APK/AAB and iOS IPA builds
+- Fastlane configuration archived in `docs/archive/mobile/fastlane/`
 
 ### 6. API/Worker Bundling
 
@@ -108,11 +99,11 @@ Comprehensive release documentation covering:
 
 ## Build Matrix
 
-| Channel | Web | API | Worker | Desktop (Win) | Desktop (Linux) | Desktop (macOS) | Android | iOS |
-|---------|-----|-----|--------|---------------|-----------------|-----------------|---------|-----|
-| dev     | ✓   | ✓   | ✓      | ✓             | ✓               | ✗               | ✓       | ✗   |
-| stage   | ✓   | ✓   | ✓      | ✓             | ✓               | ✓               | ✓       | ✓   |
-| prod    | ✓   | ✓   | ✓      | ✓             | ✓               | ✓               | ✓       | ✓   |
+| Channel | Web | API | Worker | Desktop (Win) | Desktop (Linux) | Desktop (macOS) |
+|---------|-----|-----|--------|---------------|-----------------|-----------------|
+| dev     | ✓   | ✓   | ✓      | ✓             | ✓               | ✗               |
+| stage   | ✓   | ✓   | ✓      | ✓             | ✓               | ✓               |
+| prod    | ✓   | ✓   | ✓      | ✓             | ✓               | ✓               |
 
 ## Artifact Naming Convention
 
@@ -123,9 +114,6 @@ Examples:
 - serp-web_1.0.0_prod_linux-x64.zip
 - serp-api_1.0.0-stage_stage_linux-x64.zip
 - serp-desktop_1.0.0-dev_dev_windows-x64.zip
-- serp-mobile_1.0.0_prod_android.apk
-- serp-mobile_1.0.0_prod_android.aab
-- serp-mobile_1.0.0-stage_stage_ios.ipa
 ```
 
 ## Required GitHub Secrets

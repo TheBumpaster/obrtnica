@@ -6,6 +6,7 @@ import { initTRPC, TRPCError } from '@trpc/server';
 
 import { enqueueAuditEvent } from '../audit/audit.service';
 import { db } from '../db';
+import { auditRouter } from './audit';
 import { authRouter } from './auth';
 import { emergencyAccessRouter } from './emergency-access';
 import { gdprRouter } from './gdpr';
@@ -104,6 +105,7 @@ export const protectedProcedure = auditMiddleware.use(async (opts) => {
 
 export const appRouter = router({
   auth: authRouter,
+  audit: auditRouter,
   emergencyAccess: emergencyAccessRouter,
   gdpr: gdprRouter,
   health: healthRouter,

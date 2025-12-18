@@ -10,8 +10,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@serp/shell-core": "workspace:*",
     "@serp/trpc": "workspace:*",
     "@serp/validations": "workspace:*",
+	"@serp/api": "workspace:*",
     "@trpc/client": "^11.0.0",
     "@trpc/server": "^11.0.0",
     "class-variance-authority": "^0.7.1",

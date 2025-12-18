@@ -8,9 +8,6 @@ Applies to:
 - apps/web (Next.js)
 - apps/desktop (Electron renderer)
 
-Does not apply to:
-- apps/mobile (React Native can follow its own conventions)
-
 ---
 
 ## 1) UI Folder Structure (Required)

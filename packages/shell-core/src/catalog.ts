@@ -1,0 +1,98 @@
+import type { PermissionId } from '@serp/core';
+
+import type { NavigationNode } from './types';
+
+const perm = (id: PermissionId) => [id];
+
+export const moduleCatalog: NavigationNode[] = [
+  {
+    id: 'accounting',
+    label: 'Accounting',
+    route: '/app/accounting',
+    requiredPermissions: perm('workspace.data.read' as PermissionId),
+    disabledWhenMissing: perm('workspace.data.write' as PermissionId),
+    platforms: ['web', 'desktop'],
+  },
+  {
+    id: 'projects',
+    label: 'Projects',
+    route: '/app/projects',
+    requiredPermissions: perm('workspace.data.read' as PermissionId),
+    disabledWhenMissing: perm('workspace.data.write' as PermissionId),
+    platforms: ['web', 'desktop', 'mobile'],
+  },
+  {
+    id: 'documents',
+    label: 'Documents',
+    route: '/app/documents',
+    requiredPermissions: perm('workspace.data.read' as PermissionId),
+    disabledWhenMissing: perm('workspace.data.write' as PermissionId),
+    platforms: ['web', 'desktop', 'mobile'],
+  },
+  {
+    id: 'governance',
+    label: 'Governance',
+    requiredPermissions: perm('org.view' as PermissionId),
+    platforms: ['web', 'desktop'],
+    children: [
+      {
+        id: 'org',
+        label: 'Organization',
+        route: '/app/governance/org',
+        requiredPermissions: perm('org.view' as PermissionId),
+        disabledWhenMissing: perm('org.update' as PermissionId),
+        platforms: ['web', 'desktop'],
+      },
+      {
+        id: 'workspaces',
+        label: 'Workspaces',
+        route: '/app/governance/workspaces',
+        requiredPermissions: perm('org.workspaces.create' as PermissionId),
+        platforms: ['web', 'desktop'],
+      },
+      {
+        id: 'roles',
+        label: 'Roles & Permissions',
+        route: '/app/governance/roles',
+        requiredPermissions: perm('org.members.permissions.assign' as PermissionId),
+        platforms: ['web', 'desktop'],
+      },
+      {
+        id: 'security',
+        label: 'Security',
+        route: '/app/governance/security',
+        requiredPermissions: perm('org.security.manage' as PermissionId),
+        platforms: ['web', 'desktop'],
+      },
+      {
+        id: 'api',
+        label: 'API Tokens',
+        route: '/app/governance/api',
+        requiredPermissions: perm('org.api_tokens.manage' as PermissionId),
+        platforms: ['web', 'desktop'],
+      },
+      {
+        id: 'audit',
+        label: 'Audit Logs',
+        route: '/app/governance/audit',
+        requiredPermissions: perm('org.audit.read' as PermissionId),
+        platforms: ['web', 'desktop'],
+      },
+      {
+        id: 'compliance',
+        label: 'Compliance',
+        route: '/app/governance/compliance',
+        requiredPermissions: perm('org.security.manage' as PermissionId),
+        platforms: ['web', 'desktop'],
+      },
+      {
+        id: 'billing',
+        label: 'Billing',
+        route: '/app/governance/billing',
+        requiredPermissions: perm('org.billing.read' as PermissionId),
+        disabledWhenMissing: perm('org.billing.update' as PermissionId),
+        platforms: ['web', 'desktop'],
+      },
+    ],
+  },
+];

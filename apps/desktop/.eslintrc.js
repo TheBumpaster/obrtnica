@@ -5,4 +5,16 @@ module.exports = {
     browser: true,
     node: true,
   },
+  settings: {
+    'import/resolver': {
+      typescript: {
+        project: './tsconfig.json',
+      },
+    },
+  },
+  plugins: ['react-hooks'],
+  rules: {
+    'react-hooks/rules-of-hooks': 'error',
+    'react-hooks/exhaustive-deps': 'warn',
+  },
 };
