@@ -27,8 +27,8 @@ This repository enforces strict architectural boundaries to maintain quality and
   - queue consumers and background jobs
   - orchestration only; must call `packages/core` for domain logic
 
-- `apps/web` and `apps/desktop`:
-  - UI only
+- `apps/client`:
+  - UI only (Next.js with Electron build target)
   - must not contain business rules beyond presentation and UX
 
 ---

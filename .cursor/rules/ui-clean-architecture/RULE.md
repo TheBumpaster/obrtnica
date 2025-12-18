@@ -5,8 +5,7 @@ alwaysApply: true
 UI apps must follow a clean, predictable architecture and file organization.
 
 Applies to:
-- apps/web (Next.js)
-- apps/desktop (Electron renderer)
+- apps/client (Next.js with Electron build target)
 
 ---
 

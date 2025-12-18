@@ -42,8 +42,9 @@ dist/
 web-build/
 
 # Electron
-apps/desktop/release/
-apps/desktop/app/
+apps/client/release/
+apps/client/app/
+apps/client/dist-electron/
 
 # IDE
 .vscode/*

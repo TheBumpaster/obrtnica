@@ -48,9 +48,10 @@ pnpm db:migrate
 In separate terminals:
 
 ```bash
-pnpm api:dev      # API server on port 3001
-pnpm worker:dev   # Background worker
-pnpm web:dev      # Next.js web app on port 3000
+pnpm api:dev        # API server on port 3001
+pnpm worker:dev     # Background worker
+pnpm client:dev     # Next.js client (web) on port 3000
+pnpm client:dev:electron  # Optional: launch Electron shell against client dev server
 ```
 
 ### Project Scripts
@@ -75,15 +76,15 @@ Database:
 - `pnpm db:reset` - Drop all tables and reset schema
 
 Per-app scripts:
-- `pnpm <app>:dev` - Start app in dev mode (e.g., `pnpm api:dev`)
-- `pnpm <app>:build` - Build app for production
+- `pnpm <app>:dev` - Start app in dev mode (e.g., `pnpm api:dev`, `pnpm client:dev`)
+- `pnpm <app>:build` - Build app for production (e.g., `pnpm client:build`, `pnpm client:build:electron`)
 
 ## Architecture Overview
 
 ### Data Flow
 
 ```
-Client Apps (web/mobile/desktop)
+Client App (web + Electron build)
   ↓ tRPC
 API Server (Express + tRPC)
   ↓ writes to

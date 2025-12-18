@@ -30,8 +30,7 @@ December 17, 2025
 ### Apps
 - `apps/api/` - Express + tRPC API server with Drizzle ORM
 - `apps/worker/` - RabbitMQ consumers + outbox dispatcher
-- `apps/web/` - Next.js App Router web client
-- `apps/desktop/` - Electron + Vite desktop client
+- `apps/client/` - Next.js App Router client with Electron build target
 
 > **Note:** The mobile app (`apps/mobile`) was removed from this monorepo. A reference archive is available in [`docs/archive/mobile/`](archive/mobile/).
 
@@ -133,7 +132,7 @@ Complete monorepo bootstrap with API, worker, and client applications. Implement
 - RabbitMQ async event processing with retry + DLQ
 - MongoDB derived projections for analytics
 - Notification delivery via Mailjet, Twilio, FCM, APNs
-- Web (Next.js), mobile (Expo), and desktop (Electron) clients
+- Client app (Next.js with Electron build target)
 - CI pipeline with automated testing
 
 ## Next Steps

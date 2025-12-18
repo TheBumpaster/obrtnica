@@ -122,8 +122,8 @@ jobs:
       - name: Run quality checks
         run: pnpm verify
 
-  # Build Web (Next.js standalone)
-  build-web:
+# Build Client (Next.js standalone)
+build-client:
     runs-on: ubuntu-latest
     needs: [parse-tag, quality]
     steps:
@@ -160,44 +160,44 @@ jobs:
           RELEASE_CHANNEL: ${{ needs.parse-tag.outputs.release_channel }}
         run: npx tsx scripts/ci/stamp-versions.ts "$TAG" "$VERSION_CORE" "$RELEASE_CHANNEL"
 
-      - name: Build web
-        run: pnpm web:build
+      - name: Build client (web)
+        run: pnpm client:build
 
-      - name: Package web artifact
+      - name: Package client web artifact
         run: |
-          cd apps/web
-          mkdir -p ../../artifacts/web
+          cd apps/client
+          mkdir -p ../../artifacts/client-web
           
           # Copy standalone output
-          cp -r .next/standalone ../../artifacts/web/standalone
-          cp -r .next/static ../../artifacts/web/standalone/.next/static
-          cp -r public ../../artifacts/web/standalone/public
+          cp -r .next/standalone ../../artifacts/client-web/standalone
+          cp -r .next/static ../../artifacts/client-web/standalone/.next/static
+          cp -r public ../../artifacts/client-web/standalone/public
           
           # Copy build metadata
           if [ -f ../../scripts/ci/build-metadata.json ]; then
-            cp ../../scripts/ci/build-metadata.json ../../artifacts/web/standalone/
+            cp ../../scripts/ci/build-metadata.json ../../artifacts/client-web/standalone/
           fi
           
           # Create start script
-          cat > ../../artifacts/web/standalone/start.sh << 'EOF'
+          cat > ../../artifacts/client-web/standalone/start.sh << 'EOF'
           #!/bin/bash
-          node apps/web/server.js
+          node apps/client/server.js
           EOF
-          chmod +x ../../artifacts/web/standalone/start.sh
+          chmod +x ../../artifacts/client-web/standalone/start.sh
           
-          cat > ../../artifacts/web/standalone/start.bat << 'EOF'
+          cat > ../../artifacts/client-web/standalone/start.bat << 'EOF'
           @echo off
-          node apps\web\server.js
+          node apps\client\server.js
           EOF
           
-          cd ../../artifacts/web
-          zip -r "serp-web_${{ needs.parse-tag.outputs.version_core }}_${{ needs.parse-tag.outputs.release_channel }}_linux-x64.zip" standalone/
+          cd ../../artifacts/client-web
+          zip -r "serp-client-web_${{ needs.parse-tag.outputs.version_core }}_${{ needs.parse-tag.outputs.release_channel }}_linux-x64.zip" standalone/
 
-      - name: Upload web artifact
+      - name: Upload client web artifact
         uses: actions/upload-artifact@v4
         with:
-          name: web-artifact
-          path: artifacts/web/*.zip
+          name: client-web-artifact
+          path: artifacts/client-web/*.zip
           retention-days: 30
 
   # Build API and Worker (Node.js services)
@@ -270,8 +270,8 @@ jobs:
           path: serp-worker_*.zip
           retention-days: 30
 
-  # Build Desktop (Electron) - Matrix for each OS
-  build-desktop:
+# Build Client Electron (Electron) - Matrix for each OS
+build-client-electron:
     runs-on: ${{ matrix.os }}
     needs: [parse-tag, quality]
     strategy:
@@ -329,28 +329,28 @@ jobs:
           RELEASE_CHANNEL: ${{ needs.parse-tag.outputs.release_channel }}
         run: npx tsx scripts/ci/stamp-versions.ts "$TAG" "$VERSION_CORE" "$RELEASE_CHANNEL"
 
-      - name: Build desktop
-        run: pnpm desktop:build
+      - name: Build client (Electron)
+        run: pnpm client:build:electron
 
-      - name: Package desktop artifact (Unix)
+      - name: Package client electron artifact (Unix)
         if: runner.os != 'Windows'
         run: |
-          cd apps/desktop/release
-          mkdir -p ../../../artifacts/desktop
-          zip -r "../../../artifacts/desktop/serp-desktop_${{ needs.parse-tag.outputs.version_core }}_${{ needs.parse-tag.outputs.release_channel }}_${{ matrix.platform }}.zip" .
+          cd apps/client/release
+          mkdir -p ../../../artifacts/client-electron
+          zip -r "../../../artifacts/client-electron/serp-client-electron_${{ needs.parse-tag.outputs.version_core }}_${{ needs.parse-tag.outputs.release_channel }}_${{ matrix.platform }}.zip" .
 
-      - name: Package desktop artifact (Windows)
+      - name: Package client electron artifact (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          cd apps/desktop/release
-          Compress-Archive -Path * -DestinationPath "../../../artifacts/desktop/serp-desktop_${{ needs.parse-tag.outputs.version_core }}_${{ needs.parse-tag.outputs.release_channel }}_${{ matrix.platform }}.zip"
+          cd apps/client/release
+          Compress-Archive -Path * -DestinationPath "../../../artifacts/client-electron/serp-client-electron_${{ needs.parse-tag.outputs.version_core }}_${{ needs.parse-tag.outputs.release_channel }}_${{ matrix.platform }}.zip"
 
-      - name: Upload desktop artifact
+      - name: Upload client electron artifact
         uses: actions/upload-artifact@v4
         with:
-          name: desktop-artifact-${{ matrix.platform }}
-          path: artifacts/desktop/*.zip
+          name: client-electron-artifact-${{ matrix.platform }}
+          path: artifacts/client-electron/*.zip
           retention-days: 30
 
   # Build Mobile Android
@@ -522,9 +522,9 @@ jobs:
     needs:
       - parse-tag
       - quality
-      - build-web
+      - build-client
       - build-api-worker
-      - build-desktop
+      - build-client-electron
       - build-mobile-android
       - build-mobile-ios
     if: always() && needs.parse-tag.result == 'success' && needs.quality.result == 'success'

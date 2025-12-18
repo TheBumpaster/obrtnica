@@ -2,17 +2,16 @@
 alwaysApply: true
 ---
 
-Web and Desktop UI must use **shadcn/ui** as the primary component system and must leverage the **shadcn MCP server** for discovery and installation.
+Client UI must use **shadcn/ui** as the primary component system and must leverage the **shadcn MCP server** for discovery and installation.
 
 Applies to:
-- apps/web
-- apps/desktop (Electron renderer)
+- apps/client (Next.js with Electron build target)
 
 ---
 
 ## 1) Mandatory MCP-First Workflow
 
-For any UI work in `apps/web` or `apps/desktop`, Cursor must follow this order:
+For any UI work in `apps/client`, Cursor must follow this order:
 
 1) **Search/List** the shadcn registry via MCP for an existing component/block that matches the need.
 2) **Install** the component via MCP if it exists.
@@ -26,9 +25,9 @@ Cursor must not copy/paste shadcn component source manually if MCP installation 
 ## 2) “Before Building a New Component” Requirement
 
 Before creating any new reusable component under:
-- `apps/web/components`
-- `apps/web/features/**/components`
-- `apps/desktop/components`
+- `apps/client/components`
+- `apps/client/src/app/**/components`
+- `apps/client/src/features/**/components`
 - shared component areas
 
 Cursor must:

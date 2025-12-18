@@ -39,11 +39,15 @@ function LoginForm() {
     if (tab === 'otp') {
       if (!otpRequested) {
         setInfo(null);
-        await withAuth((client) => client.auth.requestOtp.mutate({ identifier: otpIdentifier }));
+        await withAuth((client) =>
+          client.auth.requestOtp.mutate({ email: otpIdentifier, purpose: 'LOGIN' })
+        );
         setOtpRequested(true);
         setInfo('OTP sent. Enter the code.');
       } else {
-        await withAuth((client) => client.auth.verifyOtp.mutate({ identifier: otpIdentifier, code: otpCode }));
+        await withAuth((client) =>
+          client.auth.verifyOtp.mutate({ email: otpIdentifier, code: otpCode, purpose: 'LOGIN' })
+        );
         router.replace(returnTo);
       }
       return;

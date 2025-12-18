@@ -47,7 +47,7 @@ function VerifyForm() {
     setError(null);
     setMessage(null);
     try {
-      await verifyPhone(client, { phone, code: phoneCode });
+      await verifyPhone(client, { code: phoneCode });
       setMessage("Phone verified.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Phone verification failed");
@@ -61,7 +61,7 @@ function VerifyForm() {
     setError(null);
     setMessage(null);
     try {
-      await requestPhoneVerification(client, { phone });
+      await requestPhoneVerification(client, { phoneNumber: phone });
       setMessage("Verification code sent.");
     } catch (err) {
       setError("Could not send phone code.");

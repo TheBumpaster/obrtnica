@@ -34,19 +34,19 @@ A comprehensive GitHub Actions workflow that:
 - `stamp-versions.ts`: Updates app versions and creates build metadata
 - `bundle-node-service.ts`: Creates standalone deployable bundles for API/Worker
 
-### 3. Web Artifact Packaging
+### 3. Client Web Artifact Packaging
 
-**Modified:** `apps/web/next.config.ts`
+**Modified:** `apps/client/next.config.ts`
 
 - Enabled Next.js standalone output mode
 - Workflow packages `.next/standalone`, `.next/static`, `public/` into deployable zip
 - Includes start scripts for Unix and Windows
 
-### 4. Desktop Multi-Platform Support
+### 4. Client Electron Multi-Platform Support
 
-**Modified:** `apps/desktop/package.json`
+**Modified:** `apps/client/package.json`
 
-- Expanded electron-builder config for Linux, macOS, and Windows
+- Electron-builder config for Linux, macOS, and Windows
 - Supports x64 and arm64 architectures
 - Matrix builds across Windows/Linux (all channels) and macOS (stage/prod only)
 
@@ -99,11 +99,11 @@ Comprehensive release documentation covering:
 
 ## Build Matrix
 
-| Channel | Web | API | Worker | Desktop (Win) | Desktop (Linux) | Desktop (macOS) |
-|---------|-----|-----|--------|---------------|-----------------|-----------------|
-| dev     | ✓   | ✓   | ✓      | ✓             | ✓               | ✗               |
-| stage   | ✓   | ✓   | ✓      | ✓             | ✓               | ✓               |
-| prod    | ✓   | ✓   | ✓      | ✓             | ✓               | ✓               |
+| Channel | Client Web | API | Worker | Client Electron (Win) | Client Electron (Linux) | Client Electron (macOS) |
+|---------|------------|-----|--------|-----------------------|-------------------------|-------------------------|
+| dev     | ✓          | ✓   | ✓      | ✓                     | ✓                       | ✗                       |
+| stage   | ✓          | ✓   | ✓      | ✓                     | ✓                       | ✓                       |
+| prod    | ✓          | ✓   | ✓      | ✓                     | ✓                       | ✓                       |
 
 ## Artifact Naming Convention
 
@@ -111,9 +111,9 @@ Comprehensive release documentation covering:
 serp-<target>_<version>_<channel>_<platform>.<ext>
 
 Examples:
-- serp-web_1.0.0_prod_linux-x64.zip
+- serp-client-web_1.0.0_prod_linux-x64.zip
 - serp-api_1.0.0-stage_stage_linux-x64.zip
-- serp-desktop_1.0.0-dev_dev_windows-x64.zip
+- serp-client-electron_1.0.0-dev_dev_windows-x64.zip
 ```
 
 ## Required GitHub Secrets
@@ -153,7 +153,7 @@ The final `release` job:
 
 As specified in requirements:
 - ✗ Automatic deployments to infrastructure
-- ✗ Code signing/notarization (desktop - artifacts are unsigned)
+- ✗ Code signing/notarization (client Electron artifacts are unsigned)
 - ✗ App Store / Play Store automatic submission
 - ✗ Custom changelog generation (uses GitHub auto-notes)
 
@@ -174,7 +174,7 @@ git push origin v0.1.0-dev
 
 Potential improvements for future iterations:
 - Add deployment jobs (out of scope for MVP)
-- Implement code signing for desktop apps
+- Implement code signing for client Electron apps
 - Add automatic store submission for mobile
 - Integrate semantic-release or changesets
 - Add release candidate workflow
@@ -183,9 +183,9 @@ Potential improvements for future iterations:
 ## Implementation Notes
 
 - **Mobile signing:** Expects Fastlane Match for iOS; manual setup required
-- **Desktop signing:** Artifacts are unsigned; suitable for internal distribution
+- **Client Electron signing:** Artifacts are unsigned; suitable for internal distribution
 - **Standalone bundles:** API/Worker use pnpm install in clean directory (no symlinks)
-- **Web artifact:** Next.js standalone includes minimal Node.js server
+- **Client web artifact:** Next.js standalone includes minimal Node.js server
 - **Version stamping:** CI-only (doesn't commit changes back to repo)
 
 ## Dependencies Added
@@ -210,7 +210,7 @@ Potential improvements for future iterations:
 **Modified:**
 - `package.json` (added tsx, bundle scripts)
 - `apps/web/next.config.ts` (enabled standalone output)
-- `apps/desktop/package.json` (expanded electron-builder targets)
+- `apps/client/package.json` (electron-builder targets)
 - `.gitignore` (excluded CI artifacts)
 - `README.md` (added release documentation links)
 
@@ -230,7 +230,7 @@ All implementation todos completed:
 1. ✓ Inspect existing build outputs
 2. ✓ Add release tag workflow
 3. ✓ Enable Next.js standalone output
-4. ✓ Expand desktop multi-platform support
+4. ✓ Expand client Electron multi-platform support
 5. ✓ Add Fastlane mobile build config
 6. ✓ Implement API/Worker standalone bundles
 7. ✓ Document release process

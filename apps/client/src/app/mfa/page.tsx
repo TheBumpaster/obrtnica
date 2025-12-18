@@ -16,6 +16,7 @@ function MfaForm() {
   const [enrollSecret, setEnrollSecret] = useState<string | null>(null);
   const [enrollCode, setEnrollCode] = useState("");
   const [verifyCode, setVerifyCode] = useState("");
+  const [disableCode, setDisableCode] = useState("");
   const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +58,7 @@ function MfaForm() {
     setError(null);
     setMessage(null);
     try {
-      await verifyMfa(client, { codeOrRecovery: verifyCode });
+      await verifyMfa(client, { code: verifyCode });
       setMessage("MFA verified.");
     } catch (err) {
       setError("Invalid MFA code.");
@@ -71,7 +72,7 @@ function MfaForm() {
     setError(null);
     setMessage(null);
     try {
-      await disableMfa(client, {});
+      await disableMfa(client, { code: disableCode });
       setMessage("MFA disabled.");
       setEnrollSecret(null);
       setRecoveryCodes(null);
@@ -149,11 +150,17 @@ function MfaForm() {
               Verify MFA
             </button>
 
-            <div className="pt-4">
+            <div className="pt-4 space-y-2">
+              <input
+                className="w-full rounded-md border border-input bg-background px-3 py-2"
+                placeholder="Current MFA code to disable"
+                value={disableCode}
+                onChange={(e) => setDisableCode(e.target.value)}
+              />
               <button
                 className="rounded-md border border-input px-3 py-2 text-sm text-destructive disabled:opacity-50"
                 onClick={handleDisable}
-                disabled={loading}
+                disabled={loading || !disableCode}
               >
                 Disable MFA
               </button>

@@ -12,14 +12,13 @@ Cursor must follow this policy for every UI change.
 ## 1) Scope of This Rule
 
 This rule applies to:
-- `apps/web` (Next.js)
-- `apps/desktop` (Electron renderer – React DOM)
+- `apps/client` (Next.js with Electron build target)
 
 ---
 
 ## 2) UI Technology Baseline
 
-- The primary UI system for web and desktop is **shadcn/ui**.
+- The primary UI system for the client is **shadcn/ui**.
 - Components must be installed and managed via **shadcn MCP** whenever possible.
 - Hand-written UI components are allowed **only when**:
   - no suitable shadcn component exists, or
@@ -31,7 +30,7 @@ Cursor must not introduce alternative UI libraries (e.g. MUI, Ant, Chakra) unles
 
 ## 3) Mandatory Use of shadcn MCP
 
-For UI backlog items in `apps/web` or `apps/desktop`:
+For UI backlog items in `apps/client`:
 
 - Cursor must **prefer shadcn MCP tools** to:
   - list available components
@@ -74,7 +73,7 @@ When MCP is used:
 - Prefer composition of existing shadcn components over custom UI.
 
 If visual changes affect layout, spacing, or behavior:
-- They must be consistent across web and desktop where applicable.
+- They must be consistent across delivery targets (web/Electron) where applicable.
 
 ---
 

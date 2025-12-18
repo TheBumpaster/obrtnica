@@ -18,7 +18,7 @@ function StepUpForm() {
     setError(null);
     setMessage(null);
     try {
-      await withAuth((client) => stepUpAuth(client, { credential }));
+      await withAuth((client) => stepUpAuth(client, { credential, method: "password" }));
       setMessage("Step-up successful.");
     } catch (err) {
       setError("Step-up failed.");

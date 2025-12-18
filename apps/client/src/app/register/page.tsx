@@ -9,6 +9,7 @@ import { createTrpcClient } from "../../lib/trpc";
 function RegisterForm() {
   const router = useRouter();
   const [orgName, setOrgName] = useState("");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,7 +23,7 @@ function RegisterForm() {
     setMessage(null);
     try {
       const client = createTrpcClient();
-      await registerOrgAndUser(client, { orgName, email, password });
+      await registerOrgAndUser(client, { orgName, email, password, name });
       await requestEmailVerification(client);
       setMessage("Registered. Please verify your email to continue.");
       router.replace("/verify");
@@ -59,6 +60,15 @@ function RegisterForm() {
             className="w-full rounded-md border border-input bg-background px-3 py-2"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </label>
+        <label className="block space-y-1">
+          <span className="text-sm font-medium">Name</span>
+          <input
+            className="w-full rounded-md border border-input bg-background px-3 py-2"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             required
           />
         </label>

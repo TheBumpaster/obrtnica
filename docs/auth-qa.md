@@ -1,6 +1,6 @@
-# Auth QA Checklist (Web only for v1.2.0)
+# Auth QA Checklist (Client web/Electron)
 
-Scope: Web auth flows (desktop skipped per parity exception). Mobile excluded (apps/mobile removed).
+Scope: Client auth flows (Next.js source of truth; Electron uses same UI). Mobile excluded (apps/mobile removed).
 
 - Login (password): success, invalid password, rate-limit message.
 - Login (OTP): request + verify; invalid/expired code; resend timer UI.

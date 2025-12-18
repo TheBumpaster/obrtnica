@@ -22,7 +22,7 @@
 
 ### Core Infrastructure
 - ✅ TurboRepo monorepo with pnpm
-- ✅ All required apps (web, mobile, desktop, api, worker)
+- ✅ All required apps (client, api, worker)
 - ✅ Shared packages (core, validations, trpc, config, db)
 - ✅ PostgreSQL with Drizzle ORM
 - ✅ MongoDB for derived projections

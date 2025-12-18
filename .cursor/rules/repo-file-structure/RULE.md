@@ -52,7 +52,7 @@ Shared functionality must live in `packages/*`.
 ## 5) File Placement Rules
 
 - UI code goes only in:
-  - `apps/web/**`, `apps/desktop/**`
+  - `apps/client/**`
 
 - API code goes only in:
   - `apps/api/**`

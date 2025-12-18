@@ -39,14 +39,12 @@ This report provides a comprehensive review of the project implementation agains
 ### 1.2 Applications ✅ COMPLETE
 
 **Requirement**: 
-- `apps/web` — Next.js (React) web client
-- `apps/desktop` — Electron desktop client
+- `apps/client` — Next.js (React) client with Electron build target
 - `apps/api` — tRPC API server with runtime adapters
 - `apps/worker` — background jobs + messaging consumers
 
 **Implementation Status**:
-- ✅ `apps/web/` - Next.js app with TypeScript, Tailwind
-- ✅ `apps/desktop/` - Electron app with Vite
+- ✅ `apps/client/` - Next.js app with TypeScript, Tailwind, Electron build target
 - ✅ `apps/api/` - tRPC server with Express adapter
 - ✅ `apps/worker/` - Worker with RabbitMQ consumers
 
@@ -218,11 +216,11 @@ This report provides a comprehensive review of the project implementation agains
 
 ### 1.9 Offline Mode Considerations ⚠️ NOT VERIFIED
 
-**Requirement**: Mobile and desktop apps designed for offline-capable workflows with local persistence, clear separation of authoritative online state vs offline drafts/sync.
+**Requirement**: Client app (web/Electron build) designed for offline-capable workflows with local persistence, clear separation of authoritative online state vs offline drafts/sync.
 
 **Implementation Status**:
 - ⚠️ Cannot verify from codebase structure alone
-- Mobile and desktop apps exist but offline capabilities not visible in shared code
+- Client app exists but offline capabilities not visible in shared code
 
 **Findings**: ⚠️ **Cannot Verify** - Requires runtime testing
 

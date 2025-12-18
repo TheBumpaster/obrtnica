@@ -6,7 +6,7 @@ Multi-platform application with event-driven architecture, built with TypeScript
 
 This is a **TurboRepo monorepo** containing:
 
-- **2 client apps**: web (Next.js), desktop (Electron)
+- **1 client app**: client (Next.js with Electron build target)
 - **2 server apps**: API (Express + tRPC), worker (background jobs)
 - **4 shared packages**: core (business logic), validations (Zod schemas), trpc (contracts), config (tooling)
 
@@ -86,11 +86,11 @@ pnpm api:dev
 # Terminal 2: Worker
 pnpm worker:dev
 
-# Terminal 3: Web app
-pnpm web:dev
+# Terminal 3: Client (web)
+pnpm client:dev
 ```
 
-Web app runs on http://localhost:3000  
+Client (web) runs on http://localhost:3000  
 API runs on http://localhost:3001
 
 ## Project Structure
@@ -98,8 +98,7 @@ API runs on http://localhost:3001
 ```
 .
 ├── apps/
-│   ├── web/          Next.js App Router (web client)
-│   ├── desktop/      Electron + Vite (desktop client)
+│   ├── client/       Next.js App Router (web) + Electron build target
 │   ├── api/          Express + tRPC (API server)
 │   └── worker/       Background jobs + event consumers
 ├── packages/
@@ -117,7 +116,7 @@ API runs on http://localhost:3001
 ### Development
 
 - `pnpm dev` - Start all apps in dev mode
-- `pnpm <app>:dev` - Start specific app (e.g., `pnpm api:dev`)
+- `pnpm <app>:dev` - Start specific app (e.g., `pnpm api:dev`, `pnpm client:dev`)
 
 ### Quality
 

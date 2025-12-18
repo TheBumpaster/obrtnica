@@ -1,18 +1,16 @@
 # Shadcn/UI Manual Setup Implementation Summary
 
 **Date**: 2025-12-17  
-**Scope**: apps/web, apps/desktop  
-**Implementation**: Per-app component ownership
+**Scope**: apps/client  
+**Implementation**: Client app shadcn/ui setup (Next.js with Electron build target)
 
 ## Overview
 
-Successfully implemented manual shadcn/ui setup for the monorepo following the official [manual installation guide](https://ui.shadcn.com/docs/installation/manual). Both `apps/web` (Next.js) and `apps/desktop` (Vite/Electron) now have full Tailwind CSS v4 + shadcn/ui infrastructure ready for component installation.
+Successfully implemented manual shadcn/ui setup for the monorepo following the official [manual installation guide](https://ui.shadcn.com/docs/installation/manual). The unified `apps/client` (Next.js with Electron build target) has Tailwind CSS v4 + shadcn/ui infrastructure ready for component installation.
 
 ## Changes Made
 
-### 1. Tailwind CSS v4 Installation
-
-#### apps/web (Next.js)
+### 1. Tailwind CSS v4 Installation (apps/client)
 - Installed dependencies:
   - `tailwindcss@^4.1.18`
   - `postcss@^8.5.6`
@@ -24,16 +22,9 @@ Successfully implemented manual shadcn/ui setup for the monorepo following the o
 - Created `src/styles/globals.css` with full shadcn CSS variable theming
 - Imported globals.css in `src/app/layout.tsx`
 
-#### apps/desktop (Vite/Electron)
-- Installed same dependencies as web
-- Created `tailwind.config.ts` with Vite content paths
-- Created `postcss.config.mjs` using `@tailwindcss/postcss` plugin
-- Created `src/styles/globals.css` with identical shadcn CSS variable theming
-- Imported globals.css in `src/main.tsx`
-
 ### 2. Shadcn Manual Dependencies
 
-Installed in both apps:
+Installed in the client app:
 - `class-variance-authority@^0.7.1`
 - `clsx@^2.1.1`
 - `tailwind-merge@^3.4.0`
@@ -54,41 +45,20 @@ export function cn(...inputs: ClassValue[]) {
 
 ### 4. Path Aliases
 
-#### apps/web
-- Already had `@/* -> ./src/*` configured in tsconfig.json
-- No changes needed
-
-#### apps/desktop
-- Added `baseUrl: "."` and `paths: { "@/*": ["./src/*"] }` to tsconfig.json
-- Updated `vite.config.ts` to add matching alias resolution:
-  ```typescript
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
-  }
-  ```
+- `@/* -> ./src/*` configured in tsconfig.json (unchanged)
 
 ### 5. Components.json Configuration
 
-Created two `components.json` files to support both tooling scenarios:
-
-#### Root `components.json` (for repo-root tooling and shadcn MCP)
-- Points to `apps/web` paths
+Root `components.json` (for repo-root tooling and shadcn MCP)
+- Points to `apps/client` paths
 - Enables shadcn CLI and MCP to work from project root
 - Style: `new-york`
 - Icon library: `lucide`
 
-#### apps/desktop/components.json (for desktop-specific tooling)
-- Points to local desktop paths using `@/` aliases
-- Enables shadcn CLI when working within apps/desktop
-- Same style and icon library settings
-
 ### 6. Component Folders
 
-Created empty UI component folders (ready for shadcn component installation):
-- `apps/web/src/components/ui/`
-- `apps/desktop/src/components/ui/`
+Created UI component folder (ready for shadcn component installation):
+- `apps/client/src/components/ui/`
 
 ## Verification Results
 
@@ -97,7 +67,7 @@ All Definition of Done gates passed:
 ✅ **Lint**: No errors or warnings  
 ✅ **Typecheck**: All TypeScript checks pass  
 ✅ **Test**: 31 tests passed (5 test files in packages/core)  
-✅ **Build**: Both web and desktop apps build successfully  
+✅ **Build**: Client app builds successfully (web + Electron target)  
 ✅ **pnpm verify**: Full verification suite passed  
 
 ## Key Implementation Notes
@@ -125,38 +95,25 @@ To prove the pipeline end-to-end, you can now:
 
 1. Install a shadcn component (e.g., button):
    ```bash
-   # From repo root (installs to apps/web):
+   # From repo root (installs to apps/client):
    npx shadcn@latest add button
-   
-   # From apps/desktop:
-   cd apps/desktop && npx shadcn@latest add button
    ```
 
 2. Use shadcn MCP in Cursor to search and install components:
-   - MCP will use the root `components.json` by default (web)
-   - Desktop components require running commands from `apps/desktop/`
+   - MCP will use the root `components.json` by default (apps/client)
 
 ## Files Modified
 
 ### New Files
 - `components.json`
-- `apps/web/tailwind.config.ts`
-- `apps/web/postcss.config.mjs`
-- `apps/web/src/styles/globals.css`
-- `apps/web/src/lib/utils.ts`
-- `apps/desktop/components.json`
-- `apps/desktop/tailwind.config.ts`
-- `apps/desktop/postcss.config.mjs`
-- `apps/desktop/src/styles/globals.css`
-- `apps/desktop/src/lib/utils.ts`
+- `apps/client/tailwind.config.ts`
+- `apps/client/postcss.config.mjs`
+- `apps/client/src/styles/globals.css`
+- `apps/client/src/lib/utils.ts`
 
 ### Modified Files
-- `apps/web/src/app/layout.tsx` (added globals.css import)
-- `apps/desktop/src/main.tsx` (added globals.css import)
-- `apps/desktop/tsconfig.json` (added path aliases)
-- `apps/desktop/vite.config.ts` (added resolve aliases, fixed import order)
-- `apps/web/package.json` (added dependencies)
-- `apps/desktop/package.json` (added dependencies)
+- `apps/client/src/app/layout.tsx` (added globals.css import)
+- `apps/client/package.json` (added dependencies)
 
 ## Compliance
 

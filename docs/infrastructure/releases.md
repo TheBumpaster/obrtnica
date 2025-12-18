@@ -77,10 +77,10 @@ Once all builds complete:
 
 Each release includes the following artifacts:
 
-### Web
-- `serp-web_X.Y.Z_<channel>_linux-x64.zip`
+### Client Web
+- `serp-client-web_X.Y.Z_<channel>_linux-x64.zip`
   - Contains: `.next/standalone`, `.next/static`, `public/`, `build-metadata.json`
-  - Run: `./start.sh` or `node apps/web/server.js`
+  - Run: `./start.sh` or `node apps/client/server.js`
 
 ### API
 - `serp-api_X.Y.Z_<channel>_linux-x64.zip`
@@ -92,10 +92,10 @@ Each release includes the following artifacts:
   - Contains: `dist/`, `node_modules/`, `package.json`, `build-metadata.json`
   - Run: `./start.sh` or `node dist/index.js`
 
-### Desktop
-- `serp-desktop_X.Y.Z_<channel>_windows-x64.zip` (all channels)
-- `serp-desktop_X.Y.Z_<channel>_linux-x64.zip` (all channels)
-- `serp-desktop_X.Y.Z_<channel>_macos-arm64.zip` (stage/prod only)
+### Client Electron
+- `serp-client-electron_X.Y.Z_<channel>_windows-x64.zip` (all channels)
+- `serp-client-electron_X.Y.Z_<channel>_linux-x64.zip` (all channels)
+- `serp-client-electron_X.Y.Z_<channel>_macos-arm64.zip` (stage/prod only)
   - Contains: Electron application directory structure
   - Run: Execute the platform-specific binary
 
@@ -170,8 +170,8 @@ This is useful for:
 - Check provisioning profiles match bundle ID
 - Review CocoaPods installation logs
 
-### Desktop build fails on specific OS
-- Check electron-builder configuration in `apps/desktop/package.json`
+### Client Electron build fails on specific OS
+- Check electron-builder configuration in `apps/client/package.json`
 - Verify platform-specific dependencies are available
 - Review electron-builder logs
 
@@ -209,13 +209,13 @@ You can manually edit release notes after the release is published.
 
 ## Platform-Specific Notes
 
-### Web Deployment
-The web artifact is a Next.js standalone build. Deploy by:
+### Client Web Deployment
+The client web artifact is a Next.js standalone build. Deploy by:
 1. Extracting the zip
 2. Setting environment variables
-3. Running `start.sh` or `node apps/web/server.js`
+3. Running `start.sh` or `node apps/client/server.js`
 
-### Desktop Distribution
+### Client Electron Distribution
 - Artifacts are unsigned by default (for internal use)
 - For public distribution, configure code signing in `electron-builder` and add certificates to CI
 
@@ -231,7 +231,7 @@ Bundles include production dependencies. Deploy by:
 
 Out of scope for MVP (documented for future reference):
 - Automatic deployments to infrastructure
-- Artifact signing and notarization (desktop/mobile)
+- Artifact signing and notarization (client Electron/mobile)
 - App Store / Play Store automatic submission
 - Changelog generation from conventional commits
 - Release candidate workflow
