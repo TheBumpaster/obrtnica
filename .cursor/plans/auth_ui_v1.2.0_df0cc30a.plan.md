@@ -230,13 +230,6 @@ Add tests for:
 
 ### 6.3 QA checklist doc
 
-Create `docs/auth-qa.md` with manual smoke checklist exactly matching the spec.
-
----
+Create `docs/auth-qa.md` with manual smoke checklist exactly matching the spec.---
 
 ## Security guardrails (must follow)
-
-- Never log tokens/OTP/recovery codes.
-- Do not store OTP codes locally.
-- Mobile uses `expo-secure-store`.
-- Do not add new tRPC procedures; only wrap existing ones.

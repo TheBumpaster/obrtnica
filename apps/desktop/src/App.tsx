@@ -17,13 +17,24 @@ function ShellOrLogin() {
   const [activeRoute, setActiveRoute] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [initialRoute] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const params = new URLSearchParams(window.location.search);
+    const rt = params.get('returnTo');
+    return rt && rt.startsWith('/app') ? rt : null;
+  });
 
   useEffect(() => {
-    if (!activeRoute && navigation.length > 0) {
+    if (activeRoute) return;
+    if (initialRoute) {
+      setActiveRoute(initialRoute);
+      return;
+    }
+    if (navigation.length > 0) {
       const first = navigation.flatMap((n) => n.children || [n]).find((child) => child.route);
       setActiveRoute(first?.route || null);
     }
-  }, [navigation, activeRoute]);
+  }, [navigation, activeRoute, initialRoute]);
 
   const writeEnabled = useMemo(() => canWrite(permissions), [permissions]);
 

@@ -22,7 +22,7 @@ type IdentityState = {
 const IdentityContext = createContext<IdentityState | undefined>(undefined);
 
 export function IdentityProvider({ children }: { children: React.ReactNode }) {
-  const { client, tokens } = useAuth();
+  const { tokens, withAuth } = useAuth();
   const { permissions } = usePermissions();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [activeOrgId, setActiveOrgId] = useState<string | undefined>('org-placeholder');
@@ -32,7 +32,7 @@ export function IdentityProvider({ children }: { children: React.ReactNode }) {
     let mounted = true;
     async function load() {
       if (!tokens?.accessToken) return;
-      const result = await client.workspaces.listWorkspaces.query();
+      const result = await withAuth((client) => client.workspaces.listWorkspaces.query());
       if (!mounted) return;
       const ws = result.workspaces.map((w: { id: string; name: string }) => ({ id: w.id, name: w.name }));
       setWorkspaces(ws);
@@ -44,10 +44,10 @@ export function IdentityProvider({ children }: { children: React.ReactNode }) {
     return () => {
       mounted = false;
     };
-  }, [client, tokens?.accessToken, activeWorkspaceId]);
+  }, [withAuth, tokens?.accessToken, activeWorkspaceId]);
 
   const navigation = useMemo(
-    () => filterNavByPermissions(moduleCatalog, permissions),
+    () => filterNavByPermissions(moduleCatalog, permissions, { platform: 'web' }),
     [permissions]
   );
 

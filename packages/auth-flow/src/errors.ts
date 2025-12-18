@@ -90,3 +90,12 @@ export function mapTrpcErrorToAuthError(err: unknown): AuthError {
 
   return { ...fallback, fieldErrors, retryAfterSeconds };
 }
+
+/**
+ * Utility to detect unauthorized errors for refresh-on-401 guards.
+ */
+export function isUnauthorizedError(err: unknown): boolean {
+  if (!(err instanceof TRPCClientError)) return false;
+  const code = (err.data as Record<string, unknown> | undefined)?.code;
+  return code === 'UNAUTHORIZED' || err.message.toLowerCase().includes('unauthorized');
+}

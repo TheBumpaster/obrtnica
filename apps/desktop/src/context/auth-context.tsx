@@ -1,7 +1,7 @@
 "use client";
 
-import { mapTrpcErrorToAuthError } from '@serp/auth-flow';
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { isUnauthorizedError, mapTrpcErrorToAuthError } from '@serp/auth-flow';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { createTrpcClient, type ApiClient } from '../lib/trpc';
 
@@ -17,10 +17,11 @@ type AuthState = {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   setTokens: (tokens: StoredTokens | null) => void;
-  refreshTokens: () => Promise<void>;
+  refreshTokens: () => Promise<StoredTokens | null>;
   loading: boolean;
   error?: string;
   sessionStatus: 'loading' | 'authenticated' | 'unauthenticated';
+  withAuth: <T>(op: (client: ApiClient) => Promise<T>) => Promise<T>;
 };
 
 const TOKEN_KEY = 'serp-desktop-tokens';
@@ -48,6 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [sessionStatus, setSessionStatus] = useState<'loading' | 'authenticated' | 'unauthenticated'>(
     tokens ? 'authenticated' : 'unauthenticated'
   );
+  const refreshingRef = useRef(false);
 
   const client = useMemo(() => createTrpcClient(tokens?.accessToken), [tokens?.accessToken]);
 
@@ -87,7 +89,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshTokens = useCallback(async () => {
-    if (!tokens?.refreshToken) return;
+    if (!tokens?.refreshToken || refreshingRef.current) return null;
+    refreshingRef.current = true;
     try {
       const anonClient = createTrpcClient();
       const result = await anonClient.auth.refresh.mutate({ refreshToken: tokens.refreshToken });
@@ -99,11 +102,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       saveTokens(next);
       setTokensState(next);
       setSessionStatus('authenticated');
+      return next;
     } catch (err) {
       logout();
       throw err;
+    } finally {
+      refreshingRef.current = false;
     }
   }, [logout, tokens?.refreshToken]);
+
+  const withAuth = useCallback(
+    async <T,>(op: (api: ApiClient) => Promise<T>): Promise<T> => {
+      try {
+        return await op(client);
+      } catch (err) {
+        const unauthorized = isUnauthorizedError(err);
+        if (unauthorized && tokens?.refreshToken) {
+          try {
+            const refreshed = await refreshTokens();
+            const nextClient = createTrpcClient(refreshed?.accessToken ?? loadTokens()?.accessToken);
+            return await op(nextClient);
+          } catch (refreshErr) {
+            logout();
+            throw refreshErr;
+          }
+        }
+        throw err;
+      }
+    },
+    [client, tokens?.refreshToken, refreshTokens, logout]
+  );
 
   useEffect(() => {
     if (!tokens?.expiresAt) return;
@@ -124,6 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     error,
     sessionStatus,
+    withAuth,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -143,5 +143,3 @@ todos:
 - Docs accurately describe a 2-client setup: web + desktop (mobile archived/removed).
 
 ## Notes / Non-goals
-
-- We will not modify versioned backlog files unless you explicitly ask.

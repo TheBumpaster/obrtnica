@@ -14,7 +14,7 @@ type PermissionState = {
 const PermissionContext = createContext<PermissionState | undefined>(undefined);
 
 export function PermissionProvider({ children }: { children: React.ReactNode }) {
-  const { client, tokens } = useAuth();
+  const { tokens, withAuth } = useAuth();
   const [permissions, setPermissions] = useState<Set<PermissionId>>(new Set());
   const [loading, setLoading] = useState(false);
 
@@ -22,7 +22,7 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
     if (!tokens?.accessToken) return;
     setLoading(true);
     try {
-      const result = await client.rbac.getMyPermissions.query();
+      const result = await withAuth((client) => client.rbac.getMyPermissions.query());
       setPermissions(new Set(result.permissions as PermissionId[]));
     } finally {
       setLoading(false);

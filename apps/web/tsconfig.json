@@ -4,8 +4,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@serp/*": ["../../packages/*/src"],
-      "@serp/api/*": ["../api/src/*"]
+      "@serp/*": ["../../packages/*/src"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

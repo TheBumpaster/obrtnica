@@ -19,8 +19,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@serp/*": ["../../packages/*/src"],
-      "@serp/api/*": ["../api/src/*"]
+      "@serp/*": ["../../packages/*/src"]
     }
   },
   "include": ["src", "electron"],
