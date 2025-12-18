@@ -1,252 +1,31 @@
-# Contents:
+# Compliance Documentation
 
-* What standards you align with (SOC 2, ISO 27001, GDPR, HIPAA if applicable)
-* Scope of the system
-* Where to find:
+This directory contains compliance-related documentation for the system.
 
-  * policies
-  * procedures
-  * technical controls
-  * evidence
-* Statement that controls are enforced via:
+## Available Documentation
 
-  * Cursor rules
-  * backlog process
-  * CI commands
+### Procedures
 
-Example sections:
+- **[Audit Logging](procedures/audit-logging.md)** — Documents the audit logging system: what events are logged, where logs are stored, retention policies, and compliance mapping.
 
-* System overview
-* Data scope
-* Control enforcement model
-* Evidence generation model
+### Related Documentation
 
-This document connects *process → code → evidence*.
+- **[Data Classification](../data-classification.md)** — Defines classification levels (PUBLIC/INTERNAL/CONFIDENTIAL/RESTRICTED) and data categories used throughout the platform.
+- **[GDPR Workflows](../gdpr.md)** — Documents GDPR data rights workflows: export, erasure, and rectification procedures.
+- **[Audit Logging Overview](../audit-logging.md)** — Quick reference for audit logging (links to detailed procedure).
 
----
+## Control Enforcement
 
-# Foundation Documents
+Compliance controls are enforced via:
 
-* **[Data Classification Schema](../data-classification.md)** — defines classification levels (PUBLIC/INTERNAL/CONFIDENTIAL/RESTRICTED) and data categories used throughout the platform
+- **Cursor rules** (`.cursor/rules/`) — Architectural boundaries, security requirements, and data handling rules
+- **Backlog process** (`backlog/vX.Y.Z/`) — Versioned requirements that drive implementation
+- **CI commands** — `pnpm verify` runs lint, typecheck, tests, and build checks
 
----
+## Standards Alignment
 
-# Policies (what you commit to)
+The system implements controls aligned with:
 
-```
-docs/compliance/policies/
-```
-
-These are **intent statements**. They change rarely.
-
-Minimum set:
-
-1. `security-policy.md`
-
-   * access control principles
-   * encryption
-   * logging
-   * least privilege
-
-2. `privacy-policy-internal.md`
-
-   * how personal data is handled internally
-   * data minimization
-   * retention philosophy
-   * GDPR principles mapping
-
-3. `incident-response-policy.md`
-
-   * how incidents are classified
-   * response timeline
-   * escalation rules
-
-4. `access-control-policy.md`
-
-   * RBAC principles
-   * MFA expectations
-   * admin vs user roles
-
-> These do not need legal language. They need **consistency with what you actually do**.
-
----
-
-# Procedures (how you actually do it)
-
-```
-docs/compliance/procedures/
-```
-
-These map **1:1 with your implementation**.
-
-Minimum set:
-
-1. `audit-logging.md`
-
-   * what events are logged
-   * where logs are stored
-   * retention
-   * who can access logs
-
-2. `gdpr-rights-procedure.md`
-
-   * export workflow
-   * erasure/anonymization workflow
-   * timelines
-   * failure handling
-
-3. `change-management.md`
-
-   * backlog-driven changes
-   * versioned releases
-   * Definition of Done
-   * review gates
-
-4. `backup-and-recovery.md`
-
-   * what is backed up
-   * restore testing cadence
-   * RPO/RTO targets (can be aspirational early)
-
----
-
-# Risk register (ISO 27001 backbone)
-
-```
-docs/compliance/risk/
-  risk-register.md
-```
-
-This is **not scary** if done right.
-
-Structure:
-
-* Risk ID
-* Description
-* Impact
-* Likelihood
-* Mitigation
-* Owner
-* Status
-
-Example risks:
-
-* Unauthorized access to tenant data
-* Loss of audit logs
-* Misconfigured notification providers
-* Data export abuse
-
-Link mitigations to:
-
-* Cursor rules
-* backlog items
-* audit controls
-
-Auditors love seeing risks tied to **actual controls**.
-
----
-
-# Incident records (SOC 2 / ISO)
-
-```
-docs/compliance/incidents/
-```
-
-Each incident = one file.
-
-Naming:
-
-```
-incident-YYYY-MM-DD-short-description.md
-```
-
-Contents:
-
-* What happened
-* When detected
-* Impact
-* Root cause
-* Resolution
-* Preventive actions
-* Related backlog items
-
-Even “no incidents this quarter” should be documented.
-
----
-
-# Access reviews (SOC 2 critical)
-
-```
-docs/compliance/access/
-```
-
-Store:
-
-* periodic access reviews
-* admin list snapshots
-* service account reviews
-
-Example:
-
-```
-access-review-2025-Q1.md
-```
-
-Contents:
-
-* who reviewed
-* date
-* systems reviewed
-* changes made (or none)
-
-This is **mandatory** for SOC 2 Type II.
-
----
-
-# Vendor management (GDPR + HIPAA + SOC2)
-
-```
-docs/compliance/vendors/
-```
-
-One file per vendor:
-
-```
-mailjet.md
-twilio.md
-fcm-apns.md
-mongodb.md
-```
-
-Each file includes:
-
-* what data the vendor touches
-* data classification
-* purpose
-* contract status (DPA / BAA if applicable)
-* risk notes
-
-This ties directly into GDPR processor obligations.
-
----
-
-# Evidence folder (the gold mine)
-
-```
-docs/compliance/evidence/
-```
-
-This is where **proof accumulates automatically**.
-
-Examples of evidence:
-
-* screenshots of MFA enabled
-* CI logs showing `pnpm verify`
-* migration logs
-* audit log samples (redacted)
-* access review signoffs
-* incident resolution records
-
-Do **not** over-organize here. Evidence is chronological, not theoretical.
-
----
+- **GDPR** — Data subject rights (export, erasure, rectification), data minimization, retention
+- **SOC 2** — Audit logging, access controls, change management
+- **ISO 27001** — Security controls, risk management (via Cursor rules and backlog)

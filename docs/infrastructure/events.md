@@ -45,15 +45,17 @@ Emitted when: A sample entity is created via API
 **Consumers**:
 - `sample-event-consumer`: Updates `sample_projections` in MongoDB
 
-### `notification.requested` (planned)
+### `notification.requested` (v1.0.0)
 
 Emitted when: A notification should be sent to a user
 
 **Payload**:
 ```typescript
 {
+  notificationId: string;
   recipientId: string;
-  channels: Array<'email' | 'sms' | 'push'>;
+  orgId: string;
+  channels: Array<'email' | 'sms' | 'push' | 'in_app'>;
   title: string;
   body: string;
   metadata?: Record<string, unknown>;
@@ -61,7 +63,93 @@ Emitted when: A notification should be sent to a user
 ```
 
 **Consumers**:
-- `notification-consumer`: Delivers via appropriate channels
+- `notification-consumer`: Creates in-app notification, delivers via email/SMS/push channels respecting user preferences
+
+**Notes**:
+- In-app notifications are always created when `channels` includes `'in_app'`
+- Delivery respects user notification preferences per channel
+- Delivery status metadata is tracked and updated on the in-app notification record
+
+### `auth.email_verification.requested` (v1)
+
+Emitted when: An email verification email should be sent to a user
+
+**Payload**:
+```typescript
+{
+  userId: string;
+  email: string;
+  token: string; // Verification token (not hashed, for email link)
+}
+```
+
+**Consumers**:
+- `auth-events-consumer`: Routes to `auth-email-consumer` which sends verification email via Mailjet
+
+**Notes**:
+- Token is included in email link: `/verify-email?token={token}`
+- Link expires in 24 hours
+
+### `auth.password_reset.requested` (v1)
+
+Emitted when: A password reset email should be sent to a user
+
+**Payload**:
+```typescript
+{
+  userId: string;
+  email: string;
+  token: string; // Reset token (not hashed, for email link)
+}
+```
+
+**Consumers**:
+- `auth-events-consumer`: Routes to `auth-email-consumer` which sends reset email via Mailjet
+
+**Notes**:
+- Token is included in email link: `/reset-password?token={token}`
+- Link expires in 1 hour
+
+### `auth.magic_link.requested` (v1)
+
+Emitted when: A magic link email should be sent to a user for passwordless login
+
+**Payload**:
+```typescript
+{
+  userId: string;
+  email: string;
+  token: string; // Magic link token (not hashed, for email link)
+}
+```
+
+**Consumers**:
+- `auth-events-consumer`: Routes to `auth-email-consumer` which sends magic link email via Mailjet
+
+**Notes**:
+- Token is included in email link: `/magic-link?token={token}`
+- Link expires in 15 minutes and can only be used once
+
+### `auth.otp.requested` (v1)
+
+Emitted when: An OTP code should be sent to a user
+
+**Payload**:
+```typescript
+{
+  userId: string;
+  email: string;
+  code: string; // OTP code (not hashed, for sending)
+  purpose: 'LOGIN' | 'VERIFICATION' | 'MFA';
+}
+```
+
+**Consumers**:
+- `auth-events-consumer`: Routes to `auth-otp-consumer` which sends OTP code via Mailjet email
+
+**Notes**:
+- Code is sent via email (SMS support planned but not implemented)
+- Expiry varies by purpose: LOGIN (10 min), VERIFICATION (10 min), MFA (5 min)
 
 ### `gdpr.export.requested` (v1)
 
@@ -105,7 +193,7 @@ Emitted when: A GDPR erasure (right to be forgotten) is requested via API
 
 **Notes**:
 - Default mode is `ANONYMIZE` (preserves referential integrity)
-- `DELETE` mode not implemented in v1.0.0
+- `DELETE` mode is not implemented (throws error if requested)
 - If `scopeOrgId` is provided, erasure is org-scoped (admin-on-behalf)
 - MongoDB cleanup is best-effort (non-fatal if Mongo is down)
 - Audit events are never deleted (compliance requirement)
