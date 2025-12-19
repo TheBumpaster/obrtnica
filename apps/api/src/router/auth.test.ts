@@ -43,8 +43,19 @@ describe('Auth Router Integration Tests', () => {
       const result = await caller.auth.register({
         email,
         password,
-        name: 'Test User',
+        firstName: 'Test',
+        lastName: 'User',
+        phone: '+123456789',
         orgName: 'Test Org',
+        orgType: 'd.o.o.',
+        address: 'Main St 1',
+        city: 'Sarajevo',
+        postalCode: '71000',
+        registrationNumber: 'REG123',
+        idNumber: '1234567890123',
+        vatNumber: '123456789012',
+        responsibleName: 'Resp',
+        responsibleSurname: 'Person',
       });
 
       expect(result.accessToken).toBeDefined();
@@ -66,7 +77,23 @@ describe('Auth Router Integration Tests', () => {
     it('logs in an existing user and creates a new session', async () => {
       const caller = createTestCaller();
       const email = `user-${ulid()}@example.com`;
-      await caller.auth.register({ email, password, name: 'User', orgName: 'Org' });
+      await caller.auth.register({
+        email,
+        password,
+        firstName: 'User',
+        lastName: 'User',
+        phone: '+123456789',
+        orgName: 'Org',
+        orgType: 'd.o.o.',
+        address: 'Main St 1',
+        city: 'Sarajevo',
+        postalCode: '71000',
+        registrationNumber: 'REG123',
+        idNumber: '1234567890123',
+        vatNumber: '123456789012',
+        responsibleName: 'Resp',
+        responsibleSurname: 'Person',
+      });
 
       const loginResult = await caller.auth.login({ email, password });
       expect(loginResult.accessToken).toBeDefined();
@@ -85,7 +112,23 @@ describe('Auth Router Integration Tests', () => {
     it('refreshes tokens and rotates refresh token family', async () => {
       const caller = createTestCaller();
       const email = `user-${ulid()}@example.com`;
-      const { refreshToken } = await caller.auth.register({ email, password, name: 'User', orgName: 'Org' });
+      const { refreshToken } = await caller.auth.register({
+        email,
+        password,
+        firstName: 'User',
+        lastName: 'User',
+        phone: '+123456789',
+        orgName: 'Org',
+        orgType: 'd.o.o.',
+        address: 'Main St 1',
+        city: 'Sarajevo',
+        postalCode: '71000',
+        registrationNumber: 'REG123',
+        idNumber: '1234567890123',
+        vatNumber: '123456789012',
+        responsibleName: 'Resp',
+        responsibleSurname: 'Person',
+      });
 
       const refreshBefore = await db.select().from(authRefreshTokens);
 
@@ -101,7 +144,23 @@ describe('Auth Router Integration Tests', () => {
     it('lists and revokes sessions for the authenticated user', async () => {
       const caller = createTestCaller();
       const email = `user-${ulid()}@example.com`;
-      await caller.auth.register({ email, password, name: 'User', orgName: 'Org' });
+      await caller.auth.register({
+        email,
+        password,
+        firstName: 'User',
+        lastName: 'User',
+        phone: '+123456789',
+        orgName: 'Org',
+        orgType: 'd.o.o.',
+        address: 'Main St 1',
+        city: 'Sarajevo',
+        postalCode: '71000',
+        registrationNumber: 'REG123',
+        idNumber: '1234567890123',
+        vatNumber: '123456789012',
+        responsibleName: 'Resp',
+        responsibleSurname: 'Person',
+      });
 
       const dbUser = await db.select().from(users).where(eq(users.email, email));
       const membership = await db.select().from(orgMemberships).where(eq(orgMemberships.userId, dbUser[0].id));

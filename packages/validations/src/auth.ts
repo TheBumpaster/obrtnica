@@ -3,9 +3,25 @@ import { z } from 'zod';
 // Registration & Login
 export const registerSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(12).max(128),
-  name: z.string().min(1).max(200),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain an uppercase letter')
+    .regex(/\d/, 'Password must contain a number')
+    .max(128),
+  firstName: z.string().min(1).max(200),
+  lastName: z.string().min(1).max(200),
+  phone: z.string().min(3).max(50),
   orgName: z.string().min(1).max(200),
+  orgType: z.string().min(1).max(100),
+  address: z.string().min(1).max(255),
+  city: z.string().min(1).max(100),
+  postalCode: z.string().min(1).max(20),
+  registrationNumber: z.string().min(1).max(50),
+  idNumber: z.string().length(13, 'ID broj mora imati 13 cifara'),
+  vatNumber: z.string().length(12, 'PDV broj mora imati 12 cifara').optional().or(z.literal('')),
+  responsibleName: z.string().min(1).max(200),
+  responsibleSurname: z.string().min(1).max(200),
 });
 
 export const loginSchema = z.object({

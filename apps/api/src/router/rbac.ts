@@ -5,9 +5,9 @@ import { ulid } from 'ulid';
 import { z } from 'zod';
 
 import { db } from '../db';
+import { protectedProcedure, router } from './base';
 import { RbacRepository } from '../repositories/rbac-repository';
 
-import { protectedProcedure, router } from './base';
 
 const rbacRepo = new RbacRepository(db);
 const rbacService = new RbacDomainService(rbacRepo);

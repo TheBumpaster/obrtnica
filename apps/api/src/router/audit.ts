@@ -2,7 +2,6 @@ import { and, desc, eq, gte, ilike, lte, or, sql, type SQL } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { auditEvents, db } from '../db';
-
 import { protectedProcedure, router } from './base';
 
 const listAuditEventsInput = z.object({

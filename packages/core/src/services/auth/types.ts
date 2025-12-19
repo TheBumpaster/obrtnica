@@ -97,6 +97,9 @@ export interface IAuthRepository {
     email: string;
     passwordHash: string;
     name: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    phone?: string | null;
   }): Promise<void>;
   updateUser(
     id: string,
@@ -110,7 +113,19 @@ export interface IAuthRepository {
   ): Promise<void>;
 
   // Organization operations
-  createOrg(data: { id: string; name: string }): Promise<void>;
+  createOrg(data: {
+    id: string;
+    name: string;
+    type?: string | null;
+    address?: string | null;
+    city?: string | null;
+    postalCode?: string | null;
+    registrationNumber?: string | null;
+    idNumber?: string | null;
+    vatNumber?: string | null;
+    responsibleName?: string | null;
+    responsibleSurname?: string | null;
+  }): Promise<void>;
   createOrgMembership(data: { id: string; userId: string; orgId: string }): Promise<void>;
   getOrgMemberships(userId: string): Promise<OrgMembership[]>;
   // Recovery: Find orgs that might belong to a user (for orphaned users)

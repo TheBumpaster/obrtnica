@@ -42,12 +42,15 @@ export class AuthRepository implements IAuthRepository {
     return results.length > 0 ? results[0] : null;
   }
 
-  async createUser(data: { id: string; email: string; passwordHash: string; name: string }): Promise<void> {
+  async createUser(data: { id: string; email: string; passwordHash: string; name: string; firstName?: string | null; lastName?: string | null; phone?: string | null }): Promise<void> {
     await this.db.insert(users).values({
       id: data.id,
       email: data.email,
       passwordHash: data.passwordHash,
       name: data.name,
+      firstName: data.firstName ?? null,
+      lastName: data.lastName ?? null,
+      phone: data.phone ?? null,
       emailVerifiedAt: null,
       failedLoginCount: 0,
     });
@@ -67,8 +70,32 @@ export class AuthRepository implements IAuthRepository {
   }
 
   // Organization operations
-  async createOrg(data: { id: string; name: string }): Promise<void> {
-    await this.db.insert(orgs).values(data);
+  async createOrg(data: {
+    id: string;
+    name: string;
+    type?: string | null;
+    address?: string | null;
+    city?: string | null;
+    postalCode?: string | null;
+    registrationNumber?: string | null;
+    idNumber?: string | null;
+    vatNumber?: string | null;
+    responsibleName?: string | null;
+    responsibleSurname?: string | null;
+  }): Promise<void> {
+    await this.db.insert(orgs).values({
+      id: data.id,
+      name: data.name,
+      type: data.type ?? null,
+      address: data.address ?? null,
+      city: data.city ?? null,
+      postalCode: data.postalCode ?? null,
+      registrationNumber: data.registrationNumber ?? null,
+      idNumber: data.idNumber ?? null,
+      vatNumber: data.vatNumber ?? null,
+      responsibleName: data.responsibleName ?? null,
+      responsibleSurname: data.responsibleSurname ?? null,
+    });
   }
 
   async createOrgMembership(data: { id: string; userId: string; orgId: string }): Promise<void> {

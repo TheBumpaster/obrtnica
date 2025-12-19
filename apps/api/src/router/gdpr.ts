@@ -7,7 +7,6 @@ import { ulid } from 'ulid';
 
 import { enqueueAuditEvent } from '../audit/audit.service';
 import { db, gdprRequests, orgMemberships, outboxEvents } from '../db';
-
 import { protectedProcedure, router } from './base';
 
 export const gdprRouter = router({

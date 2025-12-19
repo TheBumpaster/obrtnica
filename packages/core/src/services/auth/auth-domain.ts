@@ -48,7 +48,19 @@ export class AuthDomainService {
     email: string,
     password: string,
     name: string,
-    orgName: string
+    orgName: string,
+    userExtras?: { firstName?: string; lastName?: string; phone?: string },
+    orgExtras?: {
+      type?: string;
+      address?: string;
+      city?: string;
+      postalCode?: string;
+      registrationNumber?: string;
+      idNumber?: string;
+      vatNumber?: string;
+      responsibleName?: string;
+      responsibleSurname?: string;
+    }
   ): Promise<RegisterResult> {
     // Check if user exists
     const existingUser = await this.authRepo.getUserByEmail(email);
@@ -64,12 +76,24 @@ export class AuthDomainService {
       email,
       passwordHash,
       name,
+      firstName: userExtras?.firstName ?? null,
+      lastName: userExtras?.lastName ?? null,
+      phone: userExtras?.phone ?? null,
     });
 
     // Create org
     await this.authRepo.createOrg({
       id: orgId,
       name: orgName,
+      type: orgExtras?.type ?? null,
+      address: orgExtras?.address ?? null,
+      city: orgExtras?.city ?? null,
+      postalCode: orgExtras?.postalCode ?? null,
+      registrationNumber: orgExtras?.registrationNumber ?? null,
+      idNumber: orgExtras?.idNumber ?? null,
+      vatNumber: orgExtras?.vatNumber ?? null,
+      responsibleName: orgExtras?.responsibleName ?? null,
+      responsibleSurname: orgExtras?.responsibleSurname ?? null,
     });
 
     // Create membership

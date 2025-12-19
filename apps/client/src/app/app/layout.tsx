@@ -1,16 +1,23 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useMemo } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 
-import { ShellLayout } from '../../components/shell';
 import { useAuth } from '../../context/auth-context';
+import { AppShell } from '../../layouts/app-shell/app-shell';
 
-function AppShell({ children }: { children: React.ReactNode }) {
+
+
+function AppShellLayout({ children }: { children: React.ReactNode }) {
   const { sessionStatus } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const search = useSearchParams();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const returnTo = useMemo(() => {
     const query = search?.toString();
@@ -24,7 +31,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
     }
   }, [sessionStatus, router, returnTo]);
 
-  if (sessionStatus === 'loading') {
+  if (!mounted || sessionStatus === 'loading') {
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
         Checking session…
@@ -36,7 +43,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
     return null;
   }
 
-  return <ShellLayout>{children}</ShellLayout>;
+  return <AppShell>{children}</AppShell>;
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -48,7 +55,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       }
     >
-      <AppShell>{children}</AppShell>
+      <AppShellLayout>{children}</AppShellLayout>
     </Suspense>
   );
 }

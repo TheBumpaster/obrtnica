@@ -1,6 +1,6 @@
-import { router } from './base';
 import { auditRouter } from './audit';
 import { authRouter } from './auth';
+import { router } from './base';
 import { emergencyAccessRouter } from './emergency-access';
 import { gdprRouter } from './gdpr';
 import { healthRouter } from './health';

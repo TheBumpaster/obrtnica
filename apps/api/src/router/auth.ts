@@ -93,8 +93,24 @@ export const authRouter = router({
           orgId,
           input.email,
           input.password,
-          input.name,
-          input.orgName
+          `${input.firstName} ${input.lastName}`.trim(),
+          input.orgName,
+          {
+            firstName: input.firstName,
+            lastName: input.lastName,
+            phone: input.phone,
+          },
+          {
+            type: input.orgType,
+            address: input.address,
+            city: input.city,
+            postalCode: input.postalCode,
+            registrationNumber: input.registrationNumber,
+            idNumber: input.idNumber,
+            vatNumber: input.vatNumber,
+            responsibleName: input.responsibleName,
+            responsibleSurname: input.responsibleSurname,
+          }
         );
 
         // Bootstrap default RBAC roles
