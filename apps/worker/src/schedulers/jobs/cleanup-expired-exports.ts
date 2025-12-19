@@ -4,6 +4,7 @@ import path from 'path';
 import { createChildLogger } from '@serp/core';
 import { and, eq, isNotNull, lt } from 'drizzle-orm';
 
+import { config } from '../../config';
 import { db, gdprRequests } from '../../db';
 
 const logger = createChildLogger({ component: 'cleanup-expired-exports' });
@@ -36,8 +37,7 @@ export async function cleanupExpiredExports(): Promise<void> {
     try {
       if (exportRequest.resultLocation) {
         // Delete file from storage (local FS)
-        const basePath = process.env.STORAGE_BASE_PATH || './.local-storage';
-        const fullPath = path.join(basePath, exportRequest.resultLocation);
+        const fullPath = path.join(config.STORAGE_BASE_PATH, exportRequest.resultLocation);
         await fs.unlink(fullPath).catch(() => {
           // File may already be deleted, ignore error
         });

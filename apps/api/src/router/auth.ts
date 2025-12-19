@@ -52,6 +52,7 @@ import { ulid } from 'ulid';
 import { z } from 'zod';
 
 import { enqueueAuditEvent } from '../audit/audit.service';
+import { config } from '../config';
 import {
   authStepUp,
   authSessions,
@@ -62,15 +63,15 @@ import {
   phoneVerificationTokens,
   users,
 } from '../db';
+import { publicProcedure, protectedProcedure, router } from './base';
 import { AuthRepository } from '../repositories/auth-repository';
 import { RbacRepository } from '../repositories/rbac-repository';
 import { RateLimiter } from '../services/rate-limiter';
 
-import { publicProcedure, protectedProcedure, router } from './index';
 
 const authRepo = new AuthRepository(db);
 const rbacRepo = new RbacRepository(db);
-const authService = new AuthDomainService(authRepo, process.env.JWT_SECRET || 'dev-secret-change-in-production');
+const authService = new AuthDomainService(authRepo, config.JWT_SECRET);
 const rbacService = new RbacDomainService(rbacRepo);
 const rateLimiter = new RateLimiter(db);
 
@@ -189,7 +190,7 @@ export const authRouter = router({
       // Rate limit login attempts
       const rateLimitKey = `login:${input.email}`;
       try {
-        await rateLimiter.checkRateLimit(rateLimitKey, 5, 900); // 5 attempts per 15 minutes
+        await rateLimiter.checkRateLimit(rateLimitKey, 5, 30); // 5 attempts per 15 minutes
       } catch (error) {
         throw new TRPCError({
           code: 'TOO_MANY_REQUESTS',
@@ -246,6 +247,7 @@ export const authRouter = router({
             categories: [DataCategories.AUTH],
           },
         });
+		console.error(auditEvent);
 
         await enqueueAuditEvent(db, auditEvent);
 
@@ -470,8 +472,7 @@ export const authRouter = router({
       const qrCodeUri = generateQrCodeUri(secret, userResults[0].email);
 
       // Encrypt secret for storage
-      const mfaKey = process.env.MFA_ENCRYPTION_KEY || 'dev-mfa-key-change-in-production';
-      const secretEncrypted = encryptString(secret, mfaKey);
+      const secretEncrypted = encryptString(secret, config.MFA_ENCRYPTION_KEY);
 
       // Store unverified factor
       await db.insert(mfaFactors).values({
@@ -527,8 +528,7 @@ export const authRouter = router({
       }
 
       // Decrypt secret
-      const mfaKey = process.env.MFA_ENCRYPTION_KEY || 'dev-mfa-key-change-in-production';
-      const secret = decryptString(factors[0].secretEncrypted, mfaKey);
+      const secret = decryptString(factors[0].secretEncrypted, config.MFA_ENCRYPTION_KEY);
 
       // Verify code
       if (!verifyTotp(secret, input.code)) {
@@ -639,8 +639,7 @@ export const authRouter = router({
     let method = 'TOTP';
 
     // Try TOTP first
-    const mfaKey = process.env.MFA_ENCRYPTION_KEY || 'dev-mfa-key-change-in-production';
-    const secret = decryptString(factors[0].secretEncrypted, mfaKey);
+    const secret = decryptString(factors[0].secretEncrypted, config.MFA_ENCRYPTION_KEY);
     verified = verifyTotp(secret, input.code);
 
     // If TOTP fails, try recovery codes
@@ -742,8 +741,7 @@ export const authRouter = router({
         .limit(1);
 
       if (factors.length > 0 && factors[0].verifiedAt) {
-        const mfaKey = process.env.MFA_ENCRYPTION_KEY || 'dev-mfa-key-change-in-production';
-        const secret = decryptString(factors[0].secretEncrypted, mfaKey);
+        const secret = decryptString(factors[0].secretEncrypted, config.MFA_ENCRYPTION_KEY);
         verified = verifyTotp(secret, input.credential);
       }
     }
@@ -802,8 +800,7 @@ export const authRouter = router({
     }
 
     // Verify MFA code before disabling (security check)
-    const mfaKey = process.env.MFA_ENCRYPTION_KEY || 'dev-mfa-key-change-in-production';
-    const secret = decryptString(factors[0].secretEncrypted, mfaKey);
+    const secret = decryptString(factors[0].secretEncrypted, config.MFA_ENCRYPTION_KEY);
 
     if (!verifyTotp(secret, input.code)) {
       throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invalid code' });

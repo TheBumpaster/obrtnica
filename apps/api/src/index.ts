@@ -1,5 +1,3 @@
-import 'dotenv/config';
-
 import { AuditEventTypes, buildAuditEvent, buildUserActor, DataCategories, DataClassifications , createChildLogger } from '@serp/core';
 import { setPermissionLoader, setAuthContextBuilder, setAuditFailureCallback } from '@serp/trpc';
 import cors from 'cors';

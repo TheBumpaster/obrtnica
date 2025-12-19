@@ -16,7 +16,7 @@ import { z } from 'zod';
 import { enqueueAuditEvent } from '../audit/audit.service';
 import { apiTokens, db, serviceAccounts } from '../db';
 
-import { protectedProcedure, router } from './index';
+import { protectedProcedure, router } from './base';
 
 const createServiceAccountSchema = z.object({
   name: z.string().min(1).max(200),

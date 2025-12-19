@@ -33,6 +33,7 @@
     "clean": "pnpm dlx rimraf -g **/node_modules"
   },
   "devDependencies": {
+    "dotenv": "^16.4.7",
     "turbo": "^2.3.3",
     "tsx": "^4.19.2"
   },

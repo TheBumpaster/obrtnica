@@ -3,6 +3,8 @@
  * Pure domain logic - no infrastructure dependencies
  */
 
+import { ulid } from 'ulid';
+
 import type { IAuthRepository } from './types';
 import { generateSecureToken, hashPassword, hashToken, verifyPassword } from '../../auth/crypto';
 import { TokenService } from '../../auth/token-service';
@@ -116,9 +118,31 @@ export class AuthDomainService {
     });
 
     // Get user's first org
-    const memberships = await this.authRepo.getOrgMemberships(user.id);
+    let memberships = await this.authRepo.getOrgMemberships(user.id);
+    
+    // Recovery: If no membership found, try to recover from orphaned state
+    // This handles cases where registration partially succeeded before generateId() was fixed
     if (memberships.length === 0) {
-      throw new Error('No organization membership found');
+      // Try to find orgs that might belong to this user
+      const candidateOrgs = await this.authRepo.findOrgsForRecovery(user.id);
+      
+      if (candidateOrgs.length > 0) {
+        // Create membership for the first candidate org
+        const orgId = candidateOrgs[0].id;
+        const membershipId = this.generateId();
+        await this.authRepo.createOrgMembership({
+          id: membershipId,
+          userId: user.id,
+          orgId,
+        });
+        
+        // Re-fetch memberships
+        memberships = await this.authRepo.getOrgMemberships(user.id);
+      }
+    }
+    
+    if (memberships.length === 0) {
+      throw new Error('No organization membership found. Please contact support to restore your account access.');
     }
 
     const orgId = memberships[0].orgId;
@@ -380,9 +404,25 @@ export class AuthDomainService {
     }
 
     // Get user's first org
-    const memberships = await this.authRepo.getOrgMemberships(user.id);
+    let memberships = await this.authRepo.getOrgMemberships(user.id);
+    
+    // Recovery: If no membership found, try to recover from orphaned state
     if (memberships.length === 0) {
-      throw new Error('No organization membership found');
+      const candidateOrgs = await this.authRepo.findOrgsForRecovery(user.id);
+      if (candidateOrgs.length > 0) {
+        const orgId = candidateOrgs[0].id;
+        const membershipId = this.generateId();
+        await this.authRepo.createOrgMembership({
+          id: membershipId,
+          userId: user.id,
+          orgId,
+        });
+        memberships = await this.authRepo.getOrgMemberships(user.id);
+      }
+    }
+    
+    if (memberships.length === 0) {
+      throw new Error('No organization membership found. Please contact support to restore your account access.');
     }
 
     const orgId = memberships[0].orgId;
@@ -480,9 +520,25 @@ export class AuthDomainService {
         throw new Error('User not found');
       }
 
-      const memberships = await this.authRepo.getOrgMemberships(user.id);
+      let memberships = await this.authRepo.getOrgMemberships(user.id);
+      
+      // Recovery: If no membership found, try to recover from orphaned state
       if (memberships.length === 0) {
-        throw new Error('No organization membership found');
+        const candidateOrgs = await this.authRepo.findOrgsForRecovery(user.id);
+        if (candidateOrgs.length > 0) {
+          const orgId = candidateOrgs[0].id;
+          const membershipId = this.generateId();
+          await this.authRepo.createOrgMembership({
+            id: membershipId,
+            userId: user.id,
+            orgId,
+          });
+          memberships = await this.authRepo.getOrgMemberships(user.id);
+        }
+      }
+      
+      if (memberships.length === 0) {
+        throw new Error('No organization membership found. Please contact support to restore your account access.');
       }
 
       const orgId = memberships[0].orgId;
@@ -526,10 +582,16 @@ export class AuthDomainService {
     return { success: true };
   }
 
+  /**
+   * Generate a ULID (Universally Unique Lexicographically Sortable Identifier)
+   * ULIDs are used for all entity IDs in the system as they are:
+   * - Sortable by creation time
+   * - URL-safe
+   * - Collision-resistant
+   * - Time-ordered (useful for database indexing)
+   */
   private generateId(): string {
-    // This will be provided by the API layer (ulid)
-    // For now, throw - API must provide IDs
-    throw new Error('ID generation must be provided by API layer');
+    return ulid();
   }
 
   private generateOtpCode(): string {

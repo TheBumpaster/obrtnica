@@ -1,7 +1,7 @@
 import { metrics } from '@serp/core';
 import { z } from 'zod';
 
-import { publicProcedure, router } from './index';
+import { publicProcedure, router } from './base';
 
 export const metricsRouter = router({
   /**

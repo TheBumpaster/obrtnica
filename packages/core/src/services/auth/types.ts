@@ -113,6 +113,8 @@ export interface IAuthRepository {
   createOrg(data: { id: string; name: string }): Promise<void>;
   createOrgMembership(data: { id: string; userId: string; orgId: string }): Promise<void>;
   getOrgMemberships(userId: string): Promise<OrgMembership[]>;
+  // Recovery: Find orgs that might belong to a user (for orphaned users)
+  findOrgsForRecovery(userId: string): Promise<Array<{ id: string; name: string }>>;
 
   // Session operations
   createSession(data: {

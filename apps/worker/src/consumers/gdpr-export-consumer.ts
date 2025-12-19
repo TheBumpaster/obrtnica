@@ -15,6 +15,7 @@ import { ulid } from 'ulid';
 import { z } from 'zod';
 
 import { LocalFsStorageAdapter } from '../adapters/storage/local-fs';
+import { config } from '../config';
 import { db, gdprRequests, outboxEvents, processedEvents } from '../db';
 import { QUEUES } from '../queue/setup';
 import { DrizzleGdprRepository } from '../services/gdpr-repository';
@@ -27,7 +28,7 @@ const gdprExportPayloadSchema = z.object({
 });
 
 const storageAdapter = new LocalFsStorageAdapter({
-  basePath: process.env.STORAGE_BASE_PATH || './.local-storage',
+  basePath: config.STORAGE_BASE_PATH,
 });
 
 const gdprService = createGdprService(new DrizzleGdprRepository(db));

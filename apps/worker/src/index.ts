@@ -1,5 +1,3 @@
-import 'dotenv/config';
-
 import { createChildLogger } from '@serp/core';
 
 import { startAuditEventConsumer } from './consumers/audit-event-consumer';

@@ -1,15 +1,17 @@
 import { z } from 'zod';
 
+import { config } from '../config';
+
 /**
  * Template registry mapping notification types to Mailjet template IDs
  * Template IDs should be configured via environment variables or admin panel
  */
 export const MAILJET_TEMPLATES: Record<string, string> = {
-  'email_verification': process.env.MAILJET_TEMPLATE_EMAIL_VERIFICATION || '',
-  'password_reset': process.env.MAILJET_TEMPLATE_PASSWORD_RESET || '',
-  'magic_link': process.env.MAILJET_TEMPLATE_MAGIC_LINK || '',
-  'welcome': process.env.MAILJET_TEMPLATE_WELCOME || '',
-  'notification': process.env.MAILJET_TEMPLATE_NOTIFICATION || '',
+  'email_verification': config.MAILJET_TEMPLATE_EMAIL_VERIFICATION,
+  'password_reset': config.MAILJET_TEMPLATE_PASSWORD_RESET,
+  'magic_link': config.MAILJET_TEMPLATE_MAGIC_LINK,
+  'welcome': config.MAILJET_TEMPLATE_WELCOME,
+  'notification': config.MAILJET_TEMPLATE_NOTIFICATION,
 } as const;
 
 /**

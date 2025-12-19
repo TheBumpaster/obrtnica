@@ -24,6 +24,13 @@ const configSchema = z.object({
   APNS_BUNDLE_ID: z.string().optional(),
   APNS_PRIVATE_KEY_PATH: z.string().optional(),
   APNS_PRODUCTION: z.string().default('false'),
+  APP_BASE_URL: z.string().default('http://localhost:3000'),
+  STORAGE_BASE_PATH: z.string().default('./.local-storage'),
+  MAILJET_TEMPLATE_EMAIL_VERIFICATION: z.string().default(''),
+  MAILJET_TEMPLATE_PASSWORD_RESET: z.string().default(''),
+  MAILJET_TEMPLATE_MAGIC_LINK: z.string().default(''),
+  MAILJET_TEMPLATE_WELCOME: z.string().default(''),
+  MAILJET_TEMPLATE_NOTIFICATION: z.string().default(''),
 });
 
 export const config = configSchema.parse({
@@ -49,4 +56,11 @@ export const config = configSchema.parse({
   APNS_BUNDLE_ID: process.env.APNS_BUNDLE_ID,
   APNS_PRIVATE_KEY_PATH: process.env.APNS_PRIVATE_KEY_PATH,
   APNS_PRODUCTION: process.env.APNS_PRODUCTION,
+  APP_BASE_URL: process.env.APP_BASE_URL,
+  STORAGE_BASE_PATH: process.env.STORAGE_BASE_PATH,
+  MAILJET_TEMPLATE_EMAIL_VERIFICATION: process.env.MAILJET_TEMPLATE_EMAIL_VERIFICATION,
+  MAILJET_TEMPLATE_PASSWORD_RESET: process.env.MAILJET_TEMPLATE_PASSWORD_RESET,
+  MAILJET_TEMPLATE_MAGIC_LINK: process.env.MAILJET_TEMPLATE_MAGIC_LINK,
+  MAILJET_TEMPLATE_WELCOME: process.env.MAILJET_TEMPLATE_WELCOME,
+  MAILJET_TEMPLATE_NOTIFICATION: process.env.MAILJET_TEMPLATE_NOTIFICATION,
 });

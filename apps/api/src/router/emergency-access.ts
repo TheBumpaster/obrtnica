@@ -13,7 +13,7 @@ import { z } from 'zod';
 import { enqueueAuditEvent } from '../audit/audit.service';
 import { db, emergencyAccessGrants } from '../db';
 
-import { protectedProcedure, router } from './index';
+import { protectedProcedure, router } from './base';
 
 const activateEmergencyAccessSchema = z.object({
   justification: z.string().min(10).max(1000),

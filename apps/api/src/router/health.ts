@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { publicProcedure, router } from './index';
+import { publicProcedure, router } from './base';
 
 export const healthRouter = router({
   check: publicProcedure

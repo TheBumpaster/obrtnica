@@ -7,7 +7,7 @@ import { ulid } from 'ulid';
 import { enqueueAuditEvent } from '../audit/audit.service';
 import { db, outboxEvents, sampleEntities } from '../db';
 
-import { protectedProcedure, router } from './index';
+import { protectedProcedure, router } from './base';
 
 export const sampleRouter = router({
   create: protectedProcedure

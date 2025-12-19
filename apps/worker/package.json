@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx ../../scripts/env/run.ts -- tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "tsx ../../scripts/env/run.ts -- node dist/index.js",
     "lint": "eslint src --fix --max-warnings 0",
     "typecheck": "tsc --noEmit",
     "test:integration": "vitest run"

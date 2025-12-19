@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { auditEvents, db } from '../db';
 
-import { protectedProcedure, router } from './index';
+import { protectedProcedure, router } from './base';
 
 const listAuditEventsInput = z.object({
   limit: z.number().min(1).max(200).default(50),

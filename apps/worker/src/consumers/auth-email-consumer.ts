@@ -112,5 +112,5 @@ export async function consumeAuthEmailEvent(event: DomainEvent): Promise<void> {
  * Get base URL for email links
  */
 function getBaseUrl(): string {
-  return process.env.APP_BASE_URL || 'http://localhost:3000';
+  return config.APP_BASE_URL;
 }

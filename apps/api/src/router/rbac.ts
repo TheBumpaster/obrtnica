@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { db } from '../db';
 import { RbacRepository } from '../repositories/rbac-repository';
 
-import { protectedProcedure, router } from './index';
+import { protectedProcedure, router } from './base';
 
 const rbacRepo = new RbacRepository(db);
 const rbacService = new RbacDomainService(rbacRepo);

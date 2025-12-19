@@ -5,10 +5,11 @@ import { eq, and, isNull } from 'drizzle-orm';
 import type { Request, Response } from 'express';
 import { ulid } from 'ulid';
 
+import { config } from '../config';
 import { db, apiTokens } from '../db';
 import type { AppRouter } from '../router';
 
-const tokenService = new TokenService(process.env.JWT_SECRET || 'dev-secret-change-in-production');
+const tokenService = new TokenService(config.JWT_SECRET);
 
 export async function createContext({ req }: { req: Request; res: Response }): Promise<Context> {
   let principal: ValidatedPrincipal | undefined;

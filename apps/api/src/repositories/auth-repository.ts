@@ -13,7 +13,7 @@ import type {
   OtpCode,
   OrgMembership,
 } from '@serp/core';
-import { eq, and, isNull } from 'drizzle-orm';
+import { eq, and, isNull, gte, lte } from 'drizzle-orm';
 
 import type { Database } from '../db';
 import {
@@ -85,6 +85,39 @@ export class AuthRepository implements IAuthRepository {
       .select()
       .from(orgMemberships)
       .where(and(eq(orgMemberships.userId, userId), isNull(orgMemberships.deletedAt)));
+  }
+
+  async findOrgsForRecovery(userId: string): Promise<Array<{ id: string; name: string }>> {
+    // Find orgs that were created around the same time as the user
+    // This is a heuristic to recover from orphaned users (users without memberships)
+    // This handles cases where registration partially succeeded (user/org created but membership failed)
+    const user = await this.getUserById(userId);
+    if (!user) {
+      return [];
+    }
+
+    // Find orgs created within 5 minutes of user creation (registration window)
+    // This helps recover users who registered before generateId() was fixed
+    const timeWindowStart = new Date(user.createdAt.getTime() - 5 * 60 * 1000);
+    const timeWindowEnd = new Date(user.createdAt.getTime() + 5 * 60 * 1000);
+    
+    const results = await this.db
+      .select({
+        id: orgs.id,
+        name: orgs.name,
+      })
+      .from(orgs)
+      .where(
+        and(
+          isNull(orgs.deletedAt),
+          gte(orgs.createdAt, timeWindowStart),
+          lte(orgs.createdAt, timeWindowEnd)
+        )
+      )
+      .orderBy(orgs.createdAt)
+      .limit(1);
+
+    return results;
   }
 
   // Session operations

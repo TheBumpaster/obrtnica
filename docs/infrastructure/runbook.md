@@ -29,13 +29,29 @@ This starts:
 
 3. **Configure environment**
 
-Copy `.env.example` to `.env` and fill in required values:
+Environment variables are managed at the repository root. Create a `.env` file at the root:
 
 ```bash
+# Copy the example file (if it exists)
 cp .env.example .env
+
+# Or create .env manually with required variables
 ```
 
-For local development, the defaults work with `NOTIFICATIONS_DRY_RUN=true`.
+**Environment file loading precedence:**
+1. `.env` (base configuration)
+2. `.env.local` (local overrides, gitignored)
+3. `.env.<NODE_ENV>` (e.g., `.env.development`)
+4. `.env.<NODE_ENV>.local` (e.g., `.env.development.local`, gitignored)
+
+Later files override earlier ones. For local development, you can create `.env.local` for personal overrides without affecting the base `.env`.
+
+**Required variables for local development:**
+- `DATABASE_URL` (default: `postgresql://serp:serp_dev@localhost:5432/serp`)
+- `MONGODB_URL` (default: `mongodb://serp:serp_dev@localhost:27017/serp`)
+- `RABBITMQ_URL` (default: `amqp://serp:serp_dev@localhost:5672`)
+
+For local development, the defaults work with `NOTIFICATIONS_DRY_RUN=true`. See [Environment Variables Reference](../environment-variables.md) for complete documentation.
 
 4. **Run database migrations**
 
